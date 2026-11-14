@@ -88,6 +88,8 @@ table.amb i{display:inline-block;width:10px;height:10px;border-radius:2px;margin
 svg.ser{width:100%;height:auto;display:block}svg.ser text{font:9px Inter;fill:#7a8088}
 .ce-ev{word-break:break-word}.ce-btn{flex-wrap:wrap}
 @media (max-height:880px){.lado2{display:none}}
+.chipsN{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}.chipN{font:12px Inter;border:1px solid #d6d3ca;background:#fff;border-radius:99px;padding:4px 9px;cursor:pointer;color:#16191c}
+.chipN.alto{border-color:#2868d6;color:#16324f;background:#eef3fb}.chipN.on{background:#5a44c9;border-color:#5a44c9;color:#fff}
 /* celular */
 body.campo header nav,body.campo .titulo,body.campo .barra,body.campo .lado,body.campo #swipe,body.campo .lado2,body.campo .tot,body.campo .cierre{display:none!important}
 .movil{display:none}body.campo .movil{display:block;position:absolute;left:0;right:0;top:56px;z-index:12;padding:10px 16px;background:linear-gradient(#081018ee,#08101800)}
@@ -166,7 +168,7 @@ body.campo header nav,body.campo .titulo,body.campo .barra,body.campo .lado,body
   <h2>Napa muestra qué partes de cada lote se anegan, y con qué frecuencia, con el radar de la NASA.</h2>
   <div class="tres">
     <div><small>El problema</small>Los bajos de un lote se conocen por experiencia o con años de mapas de rinde. Sembrar y fertilizar igual en todo el lote es perder plata en las zonas que se inundan, y las imágenes comunes fallan justo cuando llueve, porque hay nubes.</div>
-    <div><small>El dato</small>El radar de Sentinel-1 atraviesa las nubes y pasa cada 6 a 12 días. La NASA (OPERA DSWx-S1) lo convierte en mapas de agua de 30 m. Desde septiembre de 2024 hay más de dos años de historia sobre cada lote.</div>
+    <div><small>El dato</small>Dos radares que atraviesan nubes. Sentinel-1, procesado por la NASA (OPERA DSWx-S1), da mapas de agua de 30 m cada 6 a 12 días desde 2024. NISAR, el radar de banda L de la NASA, ve además el agua escondida debajo del cultivo.</div>
     <div><small>Lo que hace Napa</small>Dibujás o subís el lote y en un par de minutos tenés su mapa de ambientes hídricos, la serie histórica con margen de error y los días bajo agua de cada evento, exportable a CSV y GeoJSON.</div>
   </div>
   <p class="chico">La presentación arranca con un caso real, la inundación del norte de Santa Fe, entre el <b id="spIni"></b> y el <b id="spFin"></b>, sobre <b id="spHa"></b>. Medir tarda uno o dos minutos.</p>
@@ -307,12 +309,13 @@ const mapL=new maplibregl.Map({container:"mapL",center:centro,zoom:8.6,pitch:0,a
 const mapR=new maplibregl.Map({container:"mapR",center:centro,zoom:8.6,pitch:0,attributionControl:{compact:true},
   style:estilo({s:{agua:{type:"image",url:VACIO,coordinates:zonaCoords()},hd:{type:"raster",tiles:["data:,"],tileSize:T,minzoom:8,maxzoom:14,attribution:"NASA OPERA DSWx-S1 vía titiler-cmr"},
     parc:{type:"image",url:VACIO,coordinates:zonaCoords()},caja:{type:"geojson",data:{type:"FeatureCollection",features:[]}},
-    frec:{type:"image",url:VACIO,coordinates:zonaCoords()},dib:{type:"geojson",data:{type:"FeatureCollection",features:[]}},lotes:{type:"geojson",data:{type:"FeatureCollection",features:[]}},
+    frec:{type:"image",url:VACIO,coordinates:zonaCoords()},nisar:{type:"raster",tiles:["data:,"],tileSize:256,minzoom:6,maxzoom:13,attribution:"NASA GIBS · NISAR GCOV (provisional)"},dib:{type:"geojson",data:{type:"FeatureCollection",features:[]}},lotes:{type:"geojson",data:{type:"FeatureCollection",features:[]}},
     zona:{type:"geojson",data:{type:"Feature",geometry:{type:"Polygon",coordinates:[[...zonaCoords(),zonaCoords()[0]]]}}}},
   l:[{id:"zona",type:"line",source:"zona",paint:{"line-color":"#ffffff","line-opacity":.35,"line-width":1,"line-dasharray":[3,3]}},
      {id:"agua",type:"raster",source:"agua",paint:{"raster-fade-duration":0,"raster-resampling":"nearest"}},
      {id:"hd",type:"raster",source:"hd",minzoom:11,layout:{visibility:"none"},paint:{"raster-fade-duration":150}},
      {id:"parc",type:"raster",source:"parc",layout:{visibility:"none"},paint:{"raster-fade-duration":0,"raster-resampling":"nearest","raster-opacity":.82}},
+     {id:"nisar",type:"raster",source:"nisar",layout:{visibility:"none"},paint:{"raster-fade-duration":150}},
      {id:"frec",type:"raster",source:"frec",layout:{visibility:"none"},paint:{"raster-fade-duration":0,"raster-resampling":"nearest","raster-opacity":.92}},
      {id:"lotes",type:"line",source:"lotes",paint:{"line-color":"#ffd166","line-width":1.5,"line-opacity":.8}},
      {id:"caja",type:"line",source:"caja",paint:{"line-color":"#ffffff","line-width":2.5}},
@@ -373,6 +376,12 @@ function pintarParcelas(){
    Por píxel de ~30 m: pasadas válidas y pasadas con agua → frecuencia de anegamiento.
    Por pasada: % del lote con agua, con intervalo de confianza. */
 const HIST_INI = "2024-09-01";      // inicio de DSWx-S1
+const NISAR_SN = "NISAR_L2_GCOV_PROVISIONAL_V1", NISAR_GIBS = "NISAR_L2_Geocoded_Polarimetric_Covariance";
+const wmsGIBS = (layer,f)=>`https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi?SERVICE=WMS&REQUEST=GetMap&VERSION=1.1.1&LAYERS=${layer}&STYLES=&SRS=EPSG:3857&BBOX={bbox-epsg-3857}&WIDTH=256&HEIGHT=256&FORMAT=image/png&TRANSPARENT=true&TIME=${f}`;
+async function pasadasNisar(bb,ini,fin){ const out=new Set();
+  for(let p=1;p<=5;p++){ const j=await (await fetch(`https://cmr.earthdata.nasa.gov/search/granules.json?short_name=${NISAR_SN}&bounding_box=${bb.map(v=>v.toFixed(5)).join(",")}&temporal=${ini}T00:00:00Z,${fin}T23:59:59Z&page_size=500&page_num=${p}&sort_key=start_date`)).json();
+    const e=(j.feed&&j.feed.entry)||[]; e.forEach(g=>out.add(String(g.time_start).slice(0,10))); if(e.length<500) break; }
+  return [...out].sort(); }
 const MIN_OBS = 10;                 // pasadas válidas mínimas para clasificar un píxel
 const COBERTURA = 0.5;              // fracción del lote observada para contar la pasada como dato del lote
 const AMB = [
@@ -403,13 +412,13 @@ async function informe(anillo, nombre){
   const xs=ring.map(p=>p[0]), ys=ring.map(p=>p[1]), bb=[Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)];
   const ha=areaHa(ring), cen=[(bb[0]+bb[2])/2,(bb[1]+bb[3])/2];
   mapR.getSource("caja").setData({type:"Feature",geometry:{type:"Polygon",coordinates:[ring]}});
-  try{ mapR.setLayoutProperty("frec","visibility","none"); }catch(e){}
+  try{ mapR.setLayoutProperty("frec","visibility","none"); mapR.setLayoutProperty("nisar","visibility","none"); }catch(e){}
   const cab=`<div class="ce-k">Informe hídrico del lote · Napa</div><div class="ce-h">${esc(nombre)}</div><div class="ce-s">${fmt(ha)} ha · ${cen[1].toFixed(4)}, ${cen[0].toFixed(4)}</div>`;
   if(ha>5000){ panel(cab+`<p class="ce-s" style="margin-top:14px">El lote tiene más de 5.000 ha. Medí lotes individuales para que el mapa tenga sentido agronómico.</p>`); return; }
   panel(cab+`<div class="carga" id="ceC">Buscando en el catálogo de la NASA todas las pasadas de radar sobre el lote…</div><div class="prog cl"><i id="ceB"></i></div>`);
   const prog=(f,t)=>{ if(INF!==id) return; const c=$("ceC"), b=$("ceB"); if(c) c.textContent=t; if(b) b.style.width=Math.round(f*100)+"%"; };
   try{
-    const fin=hoyISO(), gran={};
+    const fin=hoyISO(), gran={}; const pNisar=pasadasNisar(bb,HIST_INI,fin).catch((e)=>{ console.warn("NISAR",e); return null; });
     (await granulos(bb,HIST_INI,fin)).forEach(g=>(gran[g.fecha]=gran[g.fecha]||[]).push(g));
     const fechas=Object.keys(gran).sort(); if(!fechas.length) throw new Error("no hay pasadas DSWx-S1 sobre este lote");
     if(INF!==id) return;
@@ -448,7 +457,8 @@ async function informe(anillo, nombre){
     cx.putImageData(im,0,0);
     const w=t2lon(tx0+c0/T,z), e=t2lon(tx0+c1/T,z), n=t2lat(ty0+r0/T,z), s=t2lat(ty0+r1/T,z);
     cv.toBlob((b)=>{ if(INF!==id) return; mapR.getSource("frec").updateImage({url:URL.createObjectURL(b),coordinates:[[w,n],[e,n],[e,s],[w,s]]}); mapR.setLayoutProperty("frec","visibility","visible"); });
-    ULT={nombre,ring,ha,haLote,fechas,obs,gran,npx,dentro,W,z,tx0,ty0,val,agu,cls,sup,haCub};
+    const nisar=await pNisar; if(INF!==id) return;
+    ULT={nisar,nombre,ring,ha,haLote,fechas,obs,gran,npx,dentro,W,z,tx0,ty0,val,agu,cls,sup,haCub};
     verInforme(ULT);
   }catch(e){ console.error(e); if(INF!==id) return; const c=$("ceC"); if(c){ c.className="ce-s"; c.textContent="No se pudo medir: "+e.message; } }
 }
@@ -493,14 +503,32 @@ function verInforme(I){
    ${serieSVG(obs,uno?uno.fecha:HIST_INI,fin)}
    <div class="tiraF"><span>% del lote con agua en cada pasada · banda: intervalo de 95%</span><span style="color:#c8372d">— umbral ${CFG.U}%</span></div>
    <div class="ce-kp" style="margin-top:10px"><div><small>Máximo con agua</small><b>${pk?pk.pct+"%":"—"}</b><small>${pk?fmtF(pk.fecha):""}</small></div><div><small>Pasadas con más del ${CFG.U}%</small><b>${obs.filter(o=>o.pct>=CFG.U).length}</b><small>de ${n}</small></div></div>
+   ${seccionNisar(I)}
    <div class="sec">Evento ${fmtC(CFG.ini)} al ${fmtC(CFG.fin)} de ${CFG.fin.slice(0,4)} (zona sombreada)</div>
    <div class="ce-est ce-${e}"><b>${EST[0]}</b><small>${EST[1]}</small></div>
    <div class="ce-kp"><div><small>Días bajo agua confirmados</small><b>${d.min}</b></div><div><small>Días posibles (como máximo)</small><b>${d.max}</b></div></div>
    <p class="ce-s">Sirve como respaldo técnico para el seguro o la declaración de emergencia agropecuaria; no reemplaza el certificado oficial.</p>
    <div class="ce-ev"><b>Fuente y método</b>. NASA OPERA DSWx-S1 (mapa de agua de 30 m derivado del radar Sentinel-1, que atraviesa nubes y humo). Clases usadas: agua abierta y vegetación inundada; las máscaras de terreno, sombra y sin dato se descartan. Una pasada cuenta para el lote si cubre al menos el ${Math.round(COBERTURA*100)}% de su superficie. Intervalo binomial con efecto de diseño ${DEFF}. Primer archivo: ${link(uno)}. Último: ${link(ult)}.
      <br><b>Límites</b>: charcos menores a un píxel de 30 m no se ven; bajo cultivos muy densos el agua puede no detectarse; la historia empieza en septiembre de 2024, así que las frecuencias se afinan con cada pasada nueva (cada 6 a 12 días).</div>
-   <div class="ce-btn"><button class="pri" onclick="print()">Imprimir o PDF</button><button onclick="csvSerie()">Serie (CSV)</button><button onclick="csvMapa()">Mapa por píxel (CSV)</button><button onclick="geoLote()">Lote (GeoJSON)</button></div>`);
+   <div class="ce-btn"><button class="pri" onclick="print()">Imprimir o PDF</button><button onclick="csvSerie()">Serie (CSV)</button><button onclick="csvMapa()">Mapa por píxel (CSV)</button><button onclick="geoLote()">Lote (GeoJSON)</button><button id="bAmb" style="display:none" onclick="verAmbientes()">Volver al mapa de ambientes</button></div>`);
 }
+function cercana(obs,f){ let m=null,dm=1e9; obs.forEach(o=>{ const d=Math.abs(DIA(o.fecha)-DIA(f)); if(d<dm){dm=d;m=o;} }); return m&&dm<=6?{o:m,d:dm}:null; }
+function seccionNisar(I){
+  const ns=I.nisar, intro=`<p class="ce-s">NISAR (NASA e ISRO, lanzado en 2025) usa radar de banda L, de 24 cm de onda, que atraviesa el cultivo. El agua debajo de las plantas se ve muy brillante, justo donde Sentinel-1 (banda C, la del mapa de arriba) puede no verla. Napa usa NISAR como segunda mirada sobre las mismas fechas.</p>`;
+  if(ns===null) return `<div class="sec">Segunda mirada: NISAR banda L</div>${intro}<p class="ce-s">No se pudo consultar el catálogo de NISAR en este momento.</p>`;
+  if(!ns.length) return `<div class="sec">Segunda mirada: NISAR banda L</div>${intro}<p class="ce-s">Todavía no hay pasadas de NISAR publicadas sobre este lote. Napa las suma solas a medida que la NASA las libera.</p>`;
+  const chips=ns.map(f=>{ const c=cercana(I.obs,f); const alto=c&&c.o.pct>=CFG.U;
+    return `<button class="chipN${alto?" alto":""}" onclick="verNisar('${f}')" title="${c?`Sentinel-1 a ${c.d} días: ${c.o.pct}% con agua`:"Sin Sentinel-1 cercano"}">${fmtC(f)}${c?` · S1 ${c.o.pct}%`:""}</button>`; }).join("");
+  const pares=ns.filter(f=>cercana(I.obs,f)).length;
+  return `<div class="sec">Segunda mirada: NISAR banda L</div>${intro}
+   <p class="ce-s"><b>${ns.length} pasadas de NISAR</b> sobre el lote; ${pares} caen a 6 días o menos de una de Sentinel-1 y sirven para contrastar. Tocá una fecha para verla en el mapa (las marcadas en azul son fechas con agua según Sentinel-1).</p>
+   <div class="chipsN">${chips}</div>
+   <p class="ce-s" style="font-size:11px">NISAR GCOV es un producto provisional de la NASA: se muestra como imagen para contrastar, todavía no entra en el cálculo de ambientes.</p>`; }
+function verNisar(f){ const src=mapR.getSource("nisar"); if(!src) return; src.setTiles([wmsGIBS(NISAR_GIBS,f)]); mapR.setLayoutProperty("nisar","visibility","visible"); mapR.setLayoutProperty("frec","visibility","none");
+  document.querySelectorAll(".chipN").forEach(b=>b.classList.toggle("on",b.getAttribute("onclick").includes(f)));
+  const c=ULT&&cercana(ULT.obs,f); aviso(`NISAR banda L del ${fmtF(f)}${c?` · Sentinel-1 a ${c.d} días: ${c.o.pct}% del lote con agua`:""}. Oscuro: agua abierta; muy brillante: agua bajo vegetación.`);
+  const b=$("bAmb"); if(b) b.style.display="inline-block"; }
+function verAmbientes(){ try{ mapR.setLayoutProperty("nisar","visibility","none"); mapR.setLayoutProperty("frec","visibility","visible"); }catch(e){} aviso(""); document.querySelectorAll(".chipN").forEach(b=>b.classList.remove("on")); const b=$("bAmb"); if(b) b.style.display="none"; }
 function bajar(nombre,texto,tipo){ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([texto],{type:tipo})); a.download=nombre; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1000); }
 const slug=(t)=>String(t).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/gi,"_").replace(/^_|_$/g,"").toLowerCase()||"lote";
 function csvSerie(){ if(!ULT) return; bajar(`napa_${slug(ULT.nombre)}_serie.csv`,"fecha,pct_agua,ic95_inf,ic95_sup,pct_vegetacion_inundada,pixeles_validos,granulo_nasa\n"+ULT.obs.map(o=>[o.fecha,o.pct,o.lo,o.hi,o.veg,o.n,o.ur||""].join(",")).join("\n"),"text/csv"); }
@@ -509,7 +537,7 @@ function csvMapa(){ if(!ULT) return; const {dentro,W,z,tx0,ty0,val,agu,cls}=ULT,
   bajar(`napa_${slug(ULT.nombre)}_mapa.csv`,f.join("\n"),"text/csv"); }
 function geoLote(){ if(!ULT) return; const p={nombre:ULT.nombre,ha:Math.round(ULT.ha*10)/10,pasadas:ULT.obs.length}; AMB.forEach(a=>p["ha_"+a.k]=Math.round(ULT.sup[a.k]*10)/10);
   bajar(`napa_${slug(ULT.nombre)}.geojson`,JSON.stringify({type:"FeatureCollection",features:[{type:"Feature",properties:p,geometry:{type:"Polygon",coordinates:[ULT.ring]}}]}),"application/geo+json"); }
-function cerrarCert(){ INF=null; $("cert").classList.remove("on"); mapR.getSource("caja").setData(vacioFC); try{ mapR.setLayoutProperty("frec","visibility","none"); }catch(e){} }
+function cerrarCert(){ INF=null; $("cert").classList.remove("on"); mapR.getSource("caja").setData(vacioFC); try{ mapR.setLayoutProperty("frec","visibility","none"); mapR.setLayoutProperty("nisar","visibility","none"); }catch(e){} aviso(""); }
 
 /* ---------- dibujar o subir lotes ---------- */
 let DIB=null;
@@ -603,6 +631,7 @@ if(/[?&]prueba\b/.test(location.search)){
     if(u.includes("collections.umm_json")) return new Response(JSON.stringify({items:[{meta:{"concept-id":"C2949811996-POCLOUD"}}]}));
     if(u.includes("granules.umm_json")){ const p=+new URL(u).searchParams.get("page_num"); if(p>1) return new Response('{"items":[]}');
       return new Response(JSON.stringify({items:fechasP.map((f,i)=>({umm:{GranuleUR:`OPERA_L3_DSWx-S1_T20JML_${f.replace(/-/g,"")}T092000Z_PRUEBA_${i}`,TemporalExtent:{RangeDateTime:{BeginningDateTime:f+"T09:20:00Z"}},SpatialExtent:{HorizontalSpatialDomain:{Geometry:{BoundingRectangles:[{WestBoundingCoordinate:-62,SouthBoundingCoordinate:-31,EastBoundingCoordinate:-59,NorthBoundingCoordinate:-28}]}}}}}))})); }
+    if(u.includes("granules.json")&&u.includes("NISAR")) return new Response(JSON.stringify({feed:{entry:fechasP.filter((f,i)=>i%2===1).map(f=>({time_start:f+"T10:00:00Z"}))}}));
     if(u.includes("tilejson.json")){ const q=new URL(u).searchParams; return new Response(JSON.stringify({tiles:["https://simulado/tiles/{z}/{x}/{y}.png?t="+q.get("temporal").slice(0,10)],minzoom:0})); }
     if(u.startsWith("https://simulado/")){ const m=u.match(/tiles\/(\d+)\/(\d+)\/(\d+)\.png\?t=(.+)$/), z=+m[1],x=+m[2],y=+m[3],f=m[4];
       const i=fechasP.indexOf(f), c=new OffscreenCanvas(256,256), ctx=c.getContext("2d"), im=ctx.createImageData(256,256);
