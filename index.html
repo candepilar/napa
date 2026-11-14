@@ -94,6 +94,10 @@ svg.ser{width:100%;height:auto;display:block}svg.ser text{font:9px Inter;fill:#7
 #lotesArch button.todos{background:#ffd166;color:#081018;border-color:#ffd166;font-weight:600}
 table.cart th{text-align:left;font:600 11px Inter;color:#7a8088;padding:4px 0;border-bottom:1px solid #e2e0d9}table.cart th:nth-child(n+2){text-align:right}
 table.cart tr.clic{cursor:pointer}table.cart tr.clic:hover td{background:#f0eee7}table.cart small{margin-left:0;color:#c8372d}
+.reco2{border-left:3px solid;border-radius:6px;background:#fff;padding:9px 11px;margin:8px 0;font-size:13px}.reco2 b{display:block;font:600 14px var(--disp)}.reco2 small{color:#555c63;font-size:12px}.reco2 p{margin:5px 0 0;line-height:1.45;color:#2b3036}
+.modos{display:flex;gap:6px;flex-wrap:wrap}.modos button{font:500 12px Inter;border:1px solid #d6d3ca;background:#fff;border-radius:99px;padding:5px 11px;cursor:pointer}.modos button.on{background:#16324f;color:#fff;border-color:#16324f}
+details.opo{border-left:3px solid;background:#fff;border-radius:6px;padding:8px 11px;margin:6px 0;font-size:13px}details.opo summary{cursor:pointer;display:flex;justify-content:space-between;gap:8px;list-style:none}details.opo summary span{color:#555c63;white-space:nowrap}
+details.opo p{margin:6px 0;color:#2b3036;line-height:1.45}details.opo ul{margin:0;padding-left:16px;color:#2868d6}details.opo li{cursor:pointer;padding:2px 0}
 /* celular */
 body.campo header nav,body.campo .titulo,body.campo .barra,body.campo .lado,body.campo #swipe,body.campo .lado2,body.campo .tot,body.campo .cierre{display:none!important}
 .movil{display:none}body.campo .movil{display:block;position:absolute;left:0;right:0;top:56px;z-index:12;padding:10px 16px;background:linear-gradient(#081018ee,#08101800)}
@@ -475,14 +479,44 @@ async function informe(anillo, nombre){
   catch(e){ console.error(e); if(INF!==id) return; const c=$("ceC"); if(c){ c.className="ce-s"; c.textContent="No se pudo medir: "+e.message; } }
 }
 
+
+/* ---------- oportunidades comerciales (reglas orientativas, a validar con agronomía) ---------- */
+const RECOS=[
+  {k:"bajos", nom:"Prescripción de siembra variable para bajos", col:"#2868d6",
+   cuando:(r)=>r.pctB>=.10, ha:(r)=>r.bajos,
+   que:"Mapa de ambientes cargado a la sembradora: menos semilla y fertilizante en los bajos, más en las lomas. Semilla de materiales con mejor comportamiento ante excesos hídricos para esas zonas.",
+   por:(r)=>`${Math.round(r.pctB*100)}% del lote se anega con frecuencia.`},
+  {k:"pastura", nom:"Pasturas para bajos casi siempre con agua", col:"#143478",
+   cuando:(r)=>r.haCub&&r.permanente/r.haCub>=.10, ha:(r)=>r.permanente,
+   que:"Esas hectáreas difícilmente paguen un cultivo agrícola. Semilla de pasturas o forrajeras tolerantes al anegamiento para uso ganadero, o dejarlas fuera de la siembra.",
+   por:(r)=>`${fmt(r.permanente)} ha con agua en la mitad o más de las pasadas.`},
+  {k:"evento", nom:"Reposición tras el anegamiento", col:"#c8372d",
+   cuando:(r)=>r.e==="r", ha:(r)=>r.ha,
+   que:"Recorrer el lote: con varios días de agua se pierden plantas y nitrógeno. Semilla para resiembra donde falló el cultivo y fertilización nitrogenada donde el análisis lo indique.",
+   por:(r)=>`${r.dmin} días bajo agua confirmados en el evento.`},
+  {k:"seguro", nom:"Seguro y trámite de emergencia", col:"#b07408",
+   cuando:(r)=>r.e==="r"||r.e==="a"||r.pctB>=.10, ha:(r)=>r.ha,
+   que:"Acompañar al socio en la declaración de emergencia agropecuaria con el informe de Napa como respaldo, y ofrecer cobertura contra excesos hídricos para la próxima campaña.",
+   por:(r)=>r.e==="r"?"Anegamiento prolongado confirmado en el evento.":r.e==="a"?"Anegamiento posible en el evento.":`Lote con ${Math.round(r.pctB*100)}% de bajos frecuentes.`},
+  {k:"alto", nom:"Lote sin limitación por agua", col:"#2f7d4f",
+   cuando:(r)=>r.pctB>=0&&r.pctB<.03&&r.e!=="r"&&r.e!=="a", ha:(r)=>r.ha,
+   que:"El agua no limita el rinde. Candidato al paquete de mayor inversión (genética, fertilización y protección completas), siempre que el suelo y el análisis lo acompañen.",
+   por:()=>"Sin bajos frecuentes ni anegamiento en el evento."}];
+const recosDe=(r)=>r&&!r.error?RECOS.filter(x=>x.cuando(r)):[];
+function seccionRecos(r){ const rs=recosDe(r); if(!rs.length) return "";
+  return `<div class="sec">Qué ofrecerle a este socio</div>${rs.map(x=>`<div class="reco2" style="border-color:${x.col}"><b>${x.nom}</b><small>${x.por(r)} · ${fmt(x.ha(r))} ha</small><p>${x.que}</p></div>`).join("")}
+   <p class="ce-s" style="font-size:11px">Reglas orientativas basadas solo en el comportamiento del lote frente al agua. Las debe validar el equipo de agronomía antes de ofrecerlas.</p>`; }
 /* ---------- cartera: todos los lotes de un archivo ---------- */
 let CART=null;
 function resumen(R){ const ev=R.obs.filter(o=>o.fecha>=CFG.ini&&o.fecha<=CFG.fin), e=estado(ev), d=ev.length>1?duracion(ev):{min:0,max:0}, bajos=R.sup.p+R.sup.f;
-  return {nombre:R.nombre,ha:R.ha,bajos,haCub:R.haCub,pctB:R.haCub?bajos/R.haCub:-1,cub:R.haLote?R.haCub/R.haLote:0,e,dmin:d.min,dmax:d.max,pasadas:R.obs.length}; }
+  return {nombre:R.nombre,ha:R.ha,bajos,permanente:R.sup.p,haCub:R.haCub,pctB:R.haCub?bajos/R.haCub:-1,cub:R.haLote?R.haCub/R.haLote:0,e,dmin:d.min,dmax:d.max,pasadas:R.obs.length}; }
 const colBajos=(p)=>p>=.3?"#143478":p>=.1?"#2868d6":p>=.03?"#80b2f8":"#e4dfd3";
 const COLE={r:"#c8372d",a:"#b07408",g:"#2f7d4f",x:"#868c92"};
+let MODO="bajos";
+function colorLote(r){ if(!r||r.error) return "#00000000"; if(MODO==="evento") return COLE[r.e]; if(MODO==="reco"){ const x=recosDe(r)[0]; return x?x.col:"#00000000"; } return r.pctB>=0?colBajos(r.pctB):"#00000000"; }
+function modoMapa(m){ MODO=m; pintarLotes(); verCartera(); }
 function pintarLotes(){ mapR.getSource("lotes").setData({type:"FeatureCollection",features:LOTES.map((L,i)=>{ const r=CART&&CART.res[i];
-  return {type:"Feature",properties:{c:r&&!r.error&&r.pctB>=0?colBajos(r.pctB):"#00000000"},geometry:{type:"Polygon",coordinates:[cerrarAnillo(L.ring)]}}; })}); }
+  return {type:"Feature",properties:{c:colorLote(r)},geometry:{type:"Polygon",coordinates:[cerrarAnillo(L.ring)]}}; })}); }
 async function medirTodos(){
   if(!LOTES.length) return; const id={}; INF=id; ULT=null; CART={res:new Array(LOTES.length),R:new Array(LOTES.length),hecho:false};
   try{ mapR.setLayoutProperty("frec","visibility","none"); mapR.setLayoutProperty("nisar","visibility","none"); }catch(e){}
@@ -502,6 +536,11 @@ function verCartera(){ if(!CART) return; const ok=CART.res.map((r,i)=>[r,i]).fil
    ${CART.hecho?"":`<div class="carga" id="ceC">Midiendo…</div><div class="prog cl"><i id="ceB" style="width:${Math.round(n/LOTES.length*100)}%"></i></div>`}
    ${ok.length?`<div class="ce-kp" style="margin-top:14px"><div><small>Bajos que se anegan con frecuencia</small><b>${fmt(haB)} ha</b><small>${haT?Math.round(haB/haT*100):0}% de ${fmt(haT)} ha con historia suficiente</small></div>
      <div><small>Anegamiento prolongado en el evento</small><b>${fmt(haC)} ha</b><small>${conf.length} lotes confirmados · ${pos.length} posibles</small></div></div>`:""}
+   ${ok.length?`<div class="sec">Mapa</div><div class="modos">${[["bajos","Bajos"],["evento","Evento"],["reco","Oportunidad principal"]].map(([k,t])=>`<button class="${MODO===k?"on":""}" onclick="modoMapa('${k}')">${t}</button>`).join("")}</div>
+   <div class="sec">Oportunidades comerciales</div>
+   ${RECOS.map(rc=>{ const ls=ok.filter(([r])=>rc.cuando(r)); if(!ls.length) return ""; const h=ls.reduce((a,[r])=>a+rc.ha(r),0);
+     return `<details class="opo" style="border-color:${rc.col}"><summary><b>${rc.nom}</b><span>${ls.length} lote${ls.length>1?"s":""} · ${fmt(h)} ha</span></summary><p>${rc.que}</p><ul>${ls.map(([r,i])=>`<li onclick="abrirDeCartera(${i})">${esc(r.nombre)} · ${fmt(rc.ha(r))} ha</li>`).join("")}</ul></details>`; }).join("")}
+   <p class="ce-s" style="font-size:11px">Reglas orientativas según el comportamiento de cada lote frente al agua; las valida el equipo de agronomía antes de ofrecerlas.</p>`:""}
    <div class="sec">Lotes, de más a menos bajos</div>
    <table class="amb cart"><tr><th>Lote</th><th>ha</th><th>Bajos</th><th>Evento</th></tr>
    ${filas.map(([r,i])=>r.error?`<tr><td>${esc(r.nombre)}<small>${esc(r.error)}</small></td><td>${fmt(r.ha)}</td><td>—</td><td>—</td></tr>`
@@ -512,7 +551,7 @@ function abrirDeCartera(i){ const R=CART&&CART.R[i]; if(!R) return; const L=LOTE
   const xs=L.ring.map(p=>p[0]), ys=L.ring.map(p=>p[1]); const h=Math.min(440,innerWidth*.28); mapR.fitBounds([[Math.min(...xs),Math.min(...ys)],[Math.max(...xs),Math.max(...ys)]],{padding:{top:110,bottom:110,left:h,right:h},maxZoom:15,duration:800});
   mostrarLote(R); }
 function volverCartera(){ ULT=null; try{ mapR.setLayoutProperty("frec","visibility","none"); mapR.setLayoutProperty("nisar","visibility","none"); }catch(e){} mapR.getSource("caja").setData(vacioFC); aviso(""); verCartera(); }
-function csvCartera(){ if(!CART) return; bajar("napa_cartera.csv","lote,ha,ha_bajos_frecuentes,pct_bajos,pct_lote_clasificado,pasadas,evento,dias_confirmados,dias_posibles,error\n"+CART.res.filter(Boolean).map(r=>r.error?[JSON.stringify(r.nombre),r.ha.toFixed(1),"","","","","","","",JSON.stringify(r.error)].join(","):[JSON.stringify(r.nombre),r.ha.toFixed(1),r.bajos.toFixed(1),r.pctB<0?"":Math.round(r.pctB*100),Math.round(r.cub*100),r.pasadas,r.e==="r"?"confirmado":r.e==="a"?"posible":r.e==="g"?"no":"sin datos",r.dmin,r.dmax,""].join(",")).join("\n"),"text/csv"); }
+function csvCartera(){ if(!CART) return; bajar("napa_cartera.csv","lote,ha,ha_bajos_frecuentes,pct_bajos,pct_lote_clasificado,pasadas,evento,dias_confirmados,dias_posibles,oportunidades,error\n"+CART.res.filter(Boolean).map(r=>r.error?[JSON.stringify(r.nombre),r.ha.toFixed(1),"","","","","","","","",JSON.stringify(r.error)].join(","):[JSON.stringify(r.nombre),r.ha.toFixed(1),r.bajos.toFixed(1),r.pctB<0?"":Math.round(r.pctB*100),Math.round(r.cub*100),r.pasadas,r.e==="r"?"confirmado":r.e==="a"?"posible":r.e==="g"?"no":"sin datos",r.dmin,r.dmax,JSON.stringify(recosDe(r).map(x=>x.nom).join(" | ")),""].join(",")).join("\n"),"text/csv"); }
 const esc=(t)=>String(t).replace(/[&<>"]/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const mesC=(f)=>new Date(f+"T12:00:00Z").toLocaleDateString("es-AR",{month:"short",year:"2-digit",timeZone:"UTC"});
 function serieSVG(obs,ini,fin){
@@ -555,6 +594,7 @@ function verInforme(I){
    ${serieSVG(obs,uno?uno.fecha:HIST_INI,fin)}
    <div class="tiraF"><span>% del lote con agua en cada pasada · banda: intervalo de 95%</span><span style="color:#c8372d">— umbral ${CFG.U}%</span></div>
    <div class="ce-kp" style="margin-top:10px"><div><small>Máximo con agua</small><b>${pk?pk.pct+"%":"—"}</b><small>${pk?fmtF(pk.fecha):""}</small></div><div><small>Pasadas con más del ${CFG.U}%</small><b>${obs.filter(o=>o.pct>=CFG.U).length}</b><small>de ${n}</small></div></div>
+   ${seccionRecos(resumen(I))}
    ${seccionNisar(I)}
    <div class="sec">Evento ${fmtC(CFG.ini)} al ${fmtC(CFG.fin)} de ${CFG.fin.slice(0,4)} (zona sombreada)</div>
    <div class="ce-est ce-${e}"><b>${EST[0]}</b><small>${EST[1]}</small></div>

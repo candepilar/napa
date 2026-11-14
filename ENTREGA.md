@@ -15,6 +15,7 @@ Se dibuja un lote o se sube el KML del campo. Napa reúne todas las pasadas del 
 - **Evento**: días bajo agua confirmados y posibles, como respaldo técnico para seguros y emergencias agropecuarias.
 - **Segunda mirada con NISAR**: el radar de banda L de la NASA atraviesa el cultivo y muestra el agua escondida debajo de las plantas, justo donde la banda C de Sentinel-1 puede fallar. Napa cruza cada pasada de NISAR con la de Sentinel-1 más cercana.
 - **Cartera**: con un KML de muchos lotes (los de los socios de una cooperativa, por ejemplo), Napa los mide todos y resume cuántas hectáreas son bajos frecuentes y cuántas estuvieron bajo agua en un evento, con un ranking por lote.
+- **Oportunidades comerciales**: con reglas simples sobre el comportamiento de cada lote frente al agua, sugiere qué ofrecerle a cada socio (prescripción de siembra variable para bajos, pasturas para bajos permanentes, reposición tras un anegamiento, seguro y trámite de emergencia, paquete completo para lotes sin limitación) y cuántas hectáreas suma cada oportunidad en toda la cartera.
 - **Exportación**: CSV por píxel para software de siembra variable, GeoJSON y PDF.
 
 Funciona en el navegador, sin cuentas ni procesamiento propio: todo se pide a servicios públicos de la NASA (CMR, OPERA, GIBS). Lo probamos con [EMPRESA] sobre lotes que conocen: [RESULTADO, por ejemplo "los bajos que marcó Napa coincidieron con los que ellos conocen en 3 de 3 lotes"].
