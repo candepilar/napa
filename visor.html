@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Napa Real · inundación por lote con datos satelitales reales</title>
+<style>
+:root{--ink:#16191c;--ink2:#555c63;--ink3:#868c92;--line:#e2e0d9;--bg:#f5f4f0;--card:#fff;--acc:#16324f;--red:#c8372d;--amb:#b07408;--grn:#2f7d4f;--blue:#2f6fd6}
+*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);font-size:14px}
+#app{display:grid;grid-template-columns:380px 1fr;height:100%}
+aside{background:var(--bg);border-right:1px solid var(--line);overflow:auto;padding:16px}
+#map{height:100%}
+h1{font-size:18px;margin:0;letter-spacing:-.01em}h2{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin:18px 0 8px;font-weight:600}
+.sub{color:var(--ink2);font-size:13px;margin:4px 0 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:6px 0}
+.row label{display:flex;align-items:center;gap:8px;cursor:pointer}
+input[type=range]{width:120px}
+button,select,input[type=text],input[type=number]{font:inherit;font-size:13px;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;padding:6px 10px}
+button{cursor:pointer}button.pri{background:var(--acc);color:#fff;border-color:var(--acc)}button:disabled{opacity:.5;cursor:default}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+.date{display:flex;gap:6px;align-items:center}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.chip{font-size:12px;padding:3px 8px;border-radius:99px;border:1px solid var(--line);background:#fff;cursor:pointer}
+.chip.n{border-color:#7b61e8;color:#5a44c9}.chip.s{border-color:#2f6fd6;color:#2f6fd6}.chip.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.hint{font-size:12px;color:var(--ink3);margin:6px 0 0;line-height:1.45}
+.lot{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.lot:last-child{border-bottom:0}.lot input{width:100%;padding:3px 6px}
+.pill{font-size:11px;padding:2px 8px;border-radius:99px;font-weight:600;white-space:nowrap}
+.p-r{background:#fbe5e2;color:var(--red)}.p-a{background:#fbefd8;color:var(--amb)}.p-g{background:#e3f2e8;color:var(--grn)}.p-x{background:#eee;color:#777}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}.kpis div{background:var(--bg);border-radius:8px;padding:8px}.kpis small{display:block;color:var(--ink2);font-size:11px}.kpis b{font-size:18px}
+.status{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:rgba(22,25,28,.86);color:#fff;padding:7px 12px;border-radius:8px;font-size:13px;display:none;z-index:5}
+.legend{position:absolute;right:12px;bottom:34px;background:rgba(255,255,255,.95);border-radius:10px;padding:8px 10px;font-size:12px;line-height:1.7;z-index:5;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.maplibregl-ctrl-attrib{font-size:10px}
+@media (max-width:860px){#app{grid-template-columns:1fr;grid-template-rows:55% 45%}aside{order:2;border-right:0;border-top:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<div id="app">
+<aside>
+  <h1>Napa Real</h1>
+  <p class="sub">Inundación del norte santafesino, abril 2026. Todas las capas son datos satelitales reales.</p>
+
+  <h2>Fecha</h2>
+  <div class="card">
+    <div class="date"><button id="dPrev" aria-label="Día anterior">◀</button><input type="date" id="fecha" value="2026-04-24"><button id="dNext" aria-label="Día siguiente">▶</button></div>
+    <div class="btns" style="margin-top:8px"><button id="buscar">Buscar pasadas de radar sobre la vista</button></div>
+    <div class="chips" id="pasadas"></div>
+    <p class="hint">Las fechas con pasada se consultan en el catálogo CMR de la NASA. <span style="color:#5a44c9">Violeta</span>: NISAR. <span style="color:#2f6fd6">Azul</span>: Sentinel-1.</p>
+  </div>
+
+  <h2>Capas</h2>
+  <div class="card" id="capas"></div>
+
+  <h2>Relieve</h2>
+  <div class="card">
+    <div class="row"><label><input type="checkbox" id="t3d" checked>Relieve 3D real</label><span><input type="range" id="exag" min="1" max="30" value="12"> <span id="exagV">×12</span></span></div>
+    <p class="hint">Modelo de elevación abierto (Mapzen/AWS Terrain Tiles). La llanura es muy plana: la exageración vertical hace visibles los bajos.</p>
+  </div>
+
+  <h2>Lotes</h2>
+  <div class="card">
+    <div class="btns"><button class="pri" id="dibujar">Dibujar lote</button><button id="exportar">Exportar lotes (GeoJSON)</button><label class="chip" style="padding:6px 10px">Cargar lotes<input type="file" id="cargarLotes" accept=".geojson,.json" hidden></label></div>
+    <p class="hint" id="drawHint">Clic para cada vértice, doble clic para cerrar. Exportá los lotes y subilos a Earth Engine para correr el pipeline.</p>
+    <div id="lotes"></div>
+  </div>
+
+  <h2>Medición del agua por lote</h2>
+  <div class="card">
+    <div class="row"><span>Desde</span><input type="date" id="mIni" value="2026-03-20"></div>
+    <div class="row"><span>Hasta</span><input type="date" id="mFin" value="2026-05-31"></div>
+    <div class="btns"><button class="pri" id="medir">Medir lotes con NASA OPERA</button><label class="chip" style="padding:6px 10px">o cargar CSV de Earth Engine<input type="file" id="cargarCSV" accept=".csv" hidden></label></div>
+    <p class="hint">Mapa de agua OPERA DSWx-S1 (NASA, Sentinel-1, 30 m). Para cada pasada se cuentan los píxeles del lote por clase: agua abierta, vegetación inundada y seco.</p>
+    <details style="margin-top:6px"><summary class="hint" style="cursor:pointer">Servidor</summary><input type="text" id="titiler" value="https://titiler-cmr.opengeos.org" style="width:100%;margin-top:6px"><p class="hint">titiler-cmr lee los archivos de la NASA del lado del servidor. Si el navegador bloquea la consulta, poné acá la dirección del proxy del VPS (ver LEEME).</p></details>
+    <div class="row"><span>Umbral de la póliza</span><span><input type="number" id="uPct" value="30" min="1" max="100" style="width:64px"> % del lote · <input type="number" id="uDias" value="10" min="1" style="width:56px"> días</span></div>
+    <div id="detalle"><p class="hint">Sin resultados cargados. El CSV sale de <code>gee/napa_pipeline_v03.js</code> (OPERA DSWx-S1 por lote y fecha).</p></div>
+  </div>
+  <p class="hint">Fuentes: NASA GIBS (NISAR GCOV provisional, OPERA RTC-S1, HLS), NASA CMR, Sentinel-2 cloudless de EOX, AWS Terrain Tiles. NISAR GCOV es un producto provisional: sus valores todavía no están validados.</p>
+</aside>
+<div style="position:relative">
+  <div id="map"></div>
+  <div class="status" id="status"></div>
+  <div class="legend" id="legend">
+    <div><i class="sw" style="background:#d9443a"></i>Siniestro</div>
+    <div><i class="sw" style="background:#d99a1e"></i>Revisión con perito</div>
+    <div><i class="sw" style="background:#3a9a62"></i>Sin siniestro</div>
+    <div><i class="sw" style="background:#bbb"></i>Sin resultados</div>
+  </div>
+</div>
+</div>
+
+<script type="text/napa">
+const GIBS = "https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi";
+const CAPAS = [
+  { id:"base", nombre:"Foto satelital (Sentinel-2 sin nubes)", tipo:"base", on:true, op:1 },
+  { id:"hls", nombre:"Óptico del día (HLS, NASA)", gibs:"HLS_S30_Nadir_BRDF_Adjusted_Reflectance", on:false, op:1 },
+  { id:"s1", nombre:"Radar Sentinel-1 (OPERA RTC, NASA)", gibs:"OPERA_L2_Radiometric_Terrain_Corrected_SAR_Sentinel-1", on:false, op:.9 },
+  { id:"nisar", nombre:"Radar NISAR banda L (GCOV, NASA)", gibs:"NISAR_L2_Geocoded_Polarimetric_Covariance", on:true, op:.9 },
+  { id:"dswx", nombre:"Agua OPERA DSWx-S1 (NASA)", titiler:true, on:true, op:.85 }
+];
+const BASES = {
+  "Sentinel-2 cloudless 2024 (EOX)": { url:"https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/{z}/{y}/{x}.jpg", attr:'<a href="https://s2maps.eu">Sentinel-2 cloudless</a> by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2024)' },
+  "Sentinel-2 cloudless 2023 (EOX)": { url:"https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2023_3857/default/g/{z}/{y}/{x}.jpg", attr:'<a href="https://s2maps.eu">Sentinel-2 cloudless</a> by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2023)' },
+  "Esri World Imagery": { url:"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", attr:"Esri, Maxar, Earthstar Geographics" }
+};
+const CMR = { nisar:"NISAR_L2_GCOV_PROVISIONAL_V1", s1:"OPERA_L2_RTC-S1_V1", dswx:"OPERA_L3_DSWX-S1_V1" };
+const DSWX = { sn:"OPERA_L3_DSWX-S1_V1", asset:"B01_WTR", regex:"B[0-9]{2}_[A-Z]+",
+  /* clases WTR de DSWx-S1: 0 seco, 1 agua abierta, 3 vegetación inundada; 250 HAND, 251 sombra o solapamiento, 254 océano, 255 sin dato */
+  agua:[1,2,3], veg:[3], validas:[0,1,2,3],
+  colormap:{"0":[0,0,0,0],"1":[24,100,240,235],"2":[120,180,250,235],"3":[123,97,232,235],"250":[0,0,0,0],"251":[0,0,0,0],"252":[0,0,0,0],"253":[0,0,0,0],"254":[0,0,0,0],"255":[0,0,0,0]} };
+const titiler = ()=>$("titiler").value.trim().replace(/\/+$/,"");
+let CONCEPTO=null;
+async function conceptId(){ if(CONCEPTO) return CONCEPTO;
+  const r=await fetch(`https://cmr.earthdata.nasa.gov/search/collections.umm_json?short_name=${DSWX.sn}&page_size=1`); const j=await r.json();
+  CONCEPTO=j.items&&j.items[0]&&j.items[0].meta["concept-id"]; if(!CONCEPTO) throw new Error("No se encontró la colección DSWx-S1 en CMR"); return CONCEPTO; }
+function qsDSWX(c){ const q=new URLSearchParams(); q.set("collection_concept_id",c); q.append("assets",DSWX.asset); q.set("assets_regex",DSWX.regex); return q; }
+const $ = (id)=>document.getElementById(id);
+const status = (t,ms)=>{const s=$("status");s.textContent=t;s.style.display=t?"block":"none";if(ms)setTimeout(()=>{if(s.textContent===t)s.style.display="none";},ms);};
+const wms = (layer,fecha)=>`${GIBS}?SERVICE=WMS&REQUEST=GetMap&VERSION=1.1.1&LAYERS=${layer}&STYLES=&SRS=EPSG:3857&BBOX={bbox-epsg-3857}&WIDTH=256&HEIGHT=256&FORMAT=image/png&TRANSPARENT=true&TIME=${fecha}`;
+
+/* ---------- mapa ---------- */
+const baseInicial = Object.keys(BASES)[0];
+const map = new maplibregl.Map({
+  container:"map", center:[-60.35,-29.35], zoom:9.6, pitch:55, bearing:-12, maxPitch:80, hash:false,
+  style:{ version:8, sources:{
+      base:{ type:"raster", tiles:[BASES[baseInicial].url], tileSize:256, maxzoom:14, attribution:BASES[baseInicial].attr },
+      dem:{ type:"raster-dem", tiles:["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"], encoding:"terrarium", tileSize:256, maxzoom:14, attribution:"Terrain Tiles (Mapzen, AWS Open Data)" },
+      demHS:{ type:"raster-dem", tiles:["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"], encoding:"terrarium", tileSize:256, maxzoom:14 }
+    },
+    layers:[
+      { id:"base", type:"raster", source:"base" },
+      { id:"hillshade", type:"hillshade", source:"demHS", paint:{ "hillshade-exaggeration":0.35, "hillshade-shadow-color":"#2b2b2b", "hillshade-highlight-color":"#ffffff" } }
+    ] }
+});
+map.addControl(new maplibregl.NavigationControl({ visualizePitch:true }), "top-right");
+map.addControl(new maplibregl.ScaleControl({ unit:"metric" }), "bottom-left");
+
+function fecha(){ return $("fecha").value; }
+function setTerrain(){ map.setTerrain($("t3d").checked ? { source:"dem", exaggeration:+$("exag").value } : null); $("exagV").textContent="×"+$("exag").value; }
+
+map.on("load", ()=>{
+  map.addSource("dswx",{ type:"raster", tiles:["data:,"], tileSize:512, attribution:"NASA OPERA DSWx-S1 vía titiler-cmr" });
+  map.addLayer({ id:"dswx", type:"raster", source:"dswx", layout:{ visibility:"none" }, paint:{ "raster-opacity":.85 } });
+  CAPAS.filter(c=>c.gibs).forEach(c=>{
+    map.addSource(c.id, { type:"raster", tiles:[wms(c.gibs,fecha())], tileSize:256, attribution:"NASA GIBS" });
+    map.addLayer({ id:c.id, type:"raster", source:c.id, layout:{ visibility:c.on?"visible":"none" }, paint:{ "raster-opacity":c.op } });
+  });
+  map.addSource("lotes", { type:"geojson", data:{ type:"FeatureCollection", features:[] } });
+  map.addLayer({ id:"lotes-fill", type:"fill", source:"lotes", paint:{ "fill-color":["get","color"], "fill-opacity":["case",["boolean",["get","sel"],false],0.45,0.28] } });
+  map.addLayer({ id:"lotes-line", type:"line", source:"lotes", paint:{ "line-color":["get","color"], "line-width":["case",["boolean",["get","sel"],false],3.5,2] } });
+  map.addSource("dibujo", { type:"geojson", data:{ type:"FeatureCollection", features:[] } });
+  map.addLayer({ id:"dibujo-line", type:"line", source:"dibujo", paint:{ "line-color":"#fff", "line-width":2, "line-dasharray":[2,1] } });
+  map.addLayer({ id:"dibujo-pt", type:"circle", source:"dibujo", filter:["==","$type","Point"], paint:{ "circle-radius":4, "circle-color":"#fff", "circle-stroke-color":"#16324f", "circle-stroke-width":2 } });
+  setTerrain();
+  try{ map.setSky({ "sky-color":"#9cbbd6", "horizon-color":"#dfe7ea", "fog-color":"#e8ecec", "sky-horizon-blend":0.6, "horizon-fog-blend":0.6, "fog-ground-blend":0.4 }); }catch(e){}
+  map.on("click","lotes-fill",(e)=>{ if(dib) return; seleccionar(e.features[0].properties.id); });
+  map.on("mouseenter","lotes-fill",()=>{ if(!dib) map.getCanvas().style.cursor="pointer"; });
+  map.on("mouseleave","lotes-fill",()=>{ if(!dib) map.getCanvas().style.cursor=""; });
+  map.on("error",(e)=>{ if(e && e.sourceId && e.sourceId!=="lotes") console.warn("Capa sin datos o sin acceso:", e.sourceId); });
+  pintarLotes();
+  capaDSWX();
+});
+async function capaDSWX(){
+  const c=CAPAS.find(x=>x.id==="dswx"); if(!c.on){ map.setLayoutProperty("dswx","visibility","none"); return; }
+  try{
+    const q=qsDSWX(await conceptId()); q.set("temporal",`${fecha()}T00:00:00Z/${fecha()}T23:59:59Z`); q.set("colormap",JSON.stringify(DSWX.colormap));
+    const r=await fetch(`${titiler()}/rasterio/WebMercatorQuad/tilejson.json?${q}`); if(!r.ok) throw new Error(r.status);
+    const tj=await r.json(); map.getSource("dswx").setTiles(tj.tiles); map.setLayoutProperty("dswx","visibility","visible");
+  }catch(e){ map.setLayoutProperty("dswx","visibility","none"); console.warn("DSWx",e); status("Sin capa de agua OPERA para esta fecha o el servidor no respondió",3000); }
+}
+
+/* ---------- capas y fecha ---------- */
+function renderCapas(){
+  $("capas").innerHTML = CAPAS.map(c=>`<div class="row"><label><input type="checkbox" data-c="${c.id}" ${c.on?"checked":""}>${c.nombre}</label><input type="range" min="0" max="100" value="${Math.round(c.op*100)}" data-o="${c.id}" aria-label="Opacidad"></div>`).join("")
+   + `<div class="row"><span class="hint" style="margin:0">Mapa base</span><select id="baseSel">${Object.keys(BASES).map(k=>`<option>${k}</option>`).join("")}</select></div>
+      <p class="hint">Las capas de radar solo muestran píxeles en los días con pasada sobre la zona. En NISAR y Sentinel-1, lo oscuro es agua abierta; en NISAR, el agua bajo vegetación se ve muy brillante.</p>`;
+  document.querySelectorAll("[data-c]").forEach(el=>el.onchange=()=>{const c=CAPAS.find(x=>x.id===el.dataset.c);c.on=el.checked;if(c.titiler){capaDSWX();return;}map.setLayoutProperty(c.id,"visibility",c.on?"visible":"none");});
+  document.querySelectorAll("[data-o]").forEach(el=>el.oninput=()=>{const c=CAPAS.find(x=>x.id===el.dataset.o);c.op=el.value/100;map.setPaintProperty(c.id,"raster-opacity",c.op);});
+  $("baseSel").onchange=(e)=>{const b=BASES[e.target.value];const src=map.getSource("base");if(src.setTiles){src.setTiles([b.url]);}};
+}
+function actualizarFecha(){
+  CAPAS.filter(c=>c.gibs).forEach(c=>{const s=map.getSource(c.id); if(s&&s.setTiles) s.setTiles([wms(c.gibs,fecha())]);});
+  if(map.getSource("dswx")) capaDSWX();
+  document.querySelectorAll("#pasadas .chip").forEach(ch=>ch.classList.toggle("on",ch.dataset.f===fecha()));
+}
+function moverDia(d){const t=new Date($("fecha").value+"T12:00:00Z");t.setUTCDate(t.getUTCDate()+d);$("fecha").value=t.toISOString().slice(0,10);actualizarFecha();}
+$("fecha").onchange=actualizarFecha;$("dPrev").onclick=()=>moverDia(-1);$("dNext").onclick=()=>moverDia(1);
+
+async function buscarPasadas(){
+  const b=map.getBounds(), bbox=[b.getWest(),b.getSouth(),b.getEast(),b.getNorth()].map(v=>v.toFixed(4)).join(",");
+  const f=new Date(fecha()+"T00:00:00Z"), ini=new Date(f.getTime()-45*864e5).toISOString().slice(0,10), fin=new Date(f.getTime()+45*864e5).toISOString().slice(0,10);
+  status("Consultando el catálogo de la NASA…");
+  const out={};
+  for(const [k,sn] of Object.entries(CMR)){
+    try{
+      const url=`https://cmr.earthdata.nasa.gov/search/granules.json?short_name=${sn}&bounding_box=${bbox}&temporal=${ini}T00:00:00Z,${fin}T23:59:59Z&page_size=500&sort_key=start_date`;
+      const r=await fetch(url); const j=await r.json();
+      (j.feed&&j.feed.entry||[]).forEach(g=>{const d=g.time_start.slice(0,10);(out[d]=out[d]||new Set()).add(k);});
+    }catch(e){ console.warn("CMR",sn,e); }
+  }
+  const fechas=Object.keys(out).sort();
+  $("pasadas").innerHTML = fechas.length ? fechas.map(d=>{const s=out[d];const cl=s.has("nisar")?"n":"s";return `<span class="chip ${cl}" data-f="${d}" title="${[...s].join(" + ")}">${d.slice(5)}${s.has("nisar")&&s.has("s1")?" ●":""}</span>`;}).join("") : '<span class="hint">No se encontraron pasadas en ±45 días para esta vista.</span>';
+  document.querySelectorAll("#pasadas .chip").forEach(ch=>ch.onclick=()=>{$("fecha").value=ch.dataset.f;actualizarFecha();});
+  status(fechas.length?`${fechas.length} fechas con pasada de radar`:"",2500);
+  actualizarFecha();
+}
+$("buscar").onclick=buscarPasadas;
+$("t3d").onchange=setTerrain;$("exag").oninput=setTerrain;
+
+/* ---------- lotes: dibujo, área, exportación ---------- */
+let LOTES=[], RES={}, SEL=null, dib=null;
+const areaHa=(ring)=>{const R=6371008.8,rad=Math.PI/180;let s=0;for(let i=0;i<ring.length-1;i++){const [x1,y1]=ring[i],[x2,y2]=ring[i+1];s+=(x2-x1)*rad*(2+Math.sin(y1*rad)+Math.sin(y2*rad));}return Math.abs(s*R*R/2)/1e4;};
+function nuevoId(){let i=1;while(LOTES.some(l=>l.id==="L"+i))i++;return "L"+i;}
+$("dibujar").onclick=()=>{
+  if(dib){ dib=null; $("dibujar").textContent="Dibujar lote"; map.doubleClickZoom.enable(); map.getSource("dibujo").setData({type:"FeatureCollection",features:[]}); map.getCanvas().style.cursor=""; return; }
+  dib=[]; $("dibujar").textContent="Cancelar"; map.doubleClickZoom.disable(); map.getCanvas().style.cursor="crosshair"; status("Clic para cada vértice, doble clic para cerrar el lote",4000);
+};
+function dibujoTemporal(){const f=[];if(dib.length>1)f.push({type:"Feature",geometry:{type:"LineString",coordinates:dib}});dib.forEach(p=>f.push({type:"Feature",geometry:{type:"Point",coordinates:p}}));map.getSource("dibujo").setData({type:"FeatureCollection",features:f});}
+map.on("click",(e)=>{ if(!dib) return; dib.push([+e.lngLat.lng.toFixed(6),+e.lngLat.lat.toFixed(6)]); dibujoTemporal(); });
+map.on("dblclick",(e)=>{ if(!dib) return; e.preventDefault(); const pts=dib.slice(0,-1);
+  if(pts.length<3){ status("Un lote necesita al menos 3 vértices",2500); return; }
+  const ring=[...pts,pts[0]]; const id=nuevoId(); LOTES.push({id,nombre:"Lote "+id.slice(1),ring,ha:areaHa(ring)});
+  dib=null; $("dibujar").textContent="Dibujar lote"; map.doubleClickZoom.enable(); map.getCanvas().style.cursor=""; map.getSource("dibujo").setData({type:"FeatureCollection",features:[]});
+  seleccionar(id); });
+function geojsonLotes(){return {type:"FeatureCollection",features:LOTES.map(l=>({type:"Feature",properties:{id:l.id,nombre:l.nombre,ha:+l.ha.toFixed(1)},geometry:{type:"Polygon",coordinates:[l.ring]}}))};}
+$("exportar").onclick=()=>{ if(!LOTES.length){status("Todavía no hay lotes",2000);return;}
+  const blob=new Blob([JSON.stringify(geojsonLotes())],{type:"application/geo+json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="napa_lotes.geojson";a.click(); };
+$("cargarLotes").onchange=async(e)=>{const f=e.target.files[0];if(!f)return;try{const gj=JSON.parse(await f.text());
+  gj.features.filter(x=>x.geometry&&/Polygon/.test(x.geometry.type)).forEach(x=>{const ring=x.geometry.type==="Polygon"?x.geometry.coordinates[0]:x.geometry.coordinates[0][0];const id=String(x.properties&&x.properties.id||nuevoId());
+    LOTES=LOTES.filter(l=>l.id!==id);LOTES.push({id,nombre:(x.properties&&x.properties.nombre)||"Lote "+id,ring,ha:areaHa(ring)});});
+  pintarLotes(); encuadrar(); }catch(err){status("No se pudo leer el GeoJSON",3000);} };
+function encuadrar(){if(!LOTES.length)return;const b=new maplibregl.LngLatBounds();LOTES.forEach(l=>l.ring.forEach(p=>b.extend(p)));map.fitBounds(b,{padding:80,pitch:55,duration:1200});}
+
+/* ---------- resultados: CSV del pipeline, duración garantizada / posible ---------- */
+$("cargarCSV").onchange=async(e)=>{const f=e.target.files[0];if(!f)return;const txt=await f.text();
+  const [h,...rows]=txt.trim().split(/\r?\n/);const cols=h.split(",").map(s=>s.trim().replace(/"/g,""));const ix=(n)=>cols.indexOf(n);
+  RES={};rows.forEach(r=>{const v=r.split(",").map(s=>s.trim().replace(/"/g,""));const id=v[ix("id")];if(!id)return;
+    const o={fecha:v[ix("fecha")].slice(0,10),pct:+v[ix("pct")],lo:ix("ic_lo")>=0?+v[ix("ic_lo")]:+v[ix("pct")],hi:ix("ic_hi")>=0?+v[ix("ic_hi")]:+v[ix("pct")],veg:ix("pct_veg")>=0?+v[ix("pct_veg")]:null,n:ix("n")>=0?+v[ix("n")]:1};
+    (RES[id]=RES[id]||[]).push(o);});
+  Object.values(RES).forEach(a=>a.sort((x,y)=>x.fecha<y.fecha?-1:1));
+  status(`Resultados cargados para ${Object.keys(RES).length} lotes`,2500); pintarLotes(); if(SEL)seleccionar(SEL); };
+/* ---------- medición directa con OPERA DSWx-S1 vía titiler-cmr ---------- */
+const DEFF=3;
+function bboxRing(r){const xs=r.map(p=>p[0]),ys=r.map(p=>p[1]);return [Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)];}
+const corta=(a,b)=>!(a[2]<b[0]||b[2]<a[0]||a[3]<b[1]||b[3]<a[1]);
+async function granulos(bb,ini,fin){
+  const out=[];let page=1;
+  while(page<=5){
+    const u=`https://cmr.earthdata.nasa.gov/search/granules.umm_json?short_name=${DSWX.sn}&bounding_box=${bb.map(v=>v.toFixed(5)).join(",")}&temporal=${ini}T00:00:00Z,${fin}T23:59:59Z&page_size=200&page_num=${page}&sort_key=start_date`;
+    const j=await (await fetch(u)).json(); const it=j.items||[];
+    it.forEach(g=>{const u2=g.umm||{},br=((((u2.SpatialExtent||{}).HorizontalSpatialDomain||{}).Geometry||{}).BoundingRectangles||[])[0];
+      out.push({ur:u2.GranuleUR,fecha:((u2.TemporalExtent||{}).RangeDateTime||{}).BeginningDateTime.slice(0,10),bb:br?[br.WestBoundingCoordinate,br.SouthBoundingCoordinate,br.EastBoundingCoordinate,br.NorthBoundingCoordinate]:null});});
+    if(it.length<200)break;page++;}
+  return out;
+}
+async function estadisticas(lote,ur,c){
+  const q=qsDSWX(c); q.set("granule_ur",ur); q.set("categorical","true");
+  const r=await fetch(`${titiler()}/rasterio/statistics?${q}`,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({type:"Feature",properties:{},geometry:{type:"Polygon",coordinates:[lote.ring]}})});
+  if(!r.ok) throw new Error("estadísticas "+r.status);
+  const j=await r.json(), st=(j.properties&&j.properties.statistics)||{}, b=st[Object.keys(st)[0]];
+  const cuenta={}; if(b&&b.histogram){const [cnt,val]=b.histogram;val.forEach((v,i)=>cuenta[Math.round(v)]=(cuenta[Math.round(v)]||0)+cnt[i]);}
+  return cuenta;
+}
+async function medir(){
+  if(!LOTES.length){status("Dibujá o cargá al menos un lote",2500);return;}
+  const ini=$("mIni").value, fin=$("mFin").value; $("medir").disabled=true;
+  try{
+    status("Buscando pasadas de Sentinel-1 en el catálogo de la NASA…");
+    const c=await conceptId(); const bbs=LOTES.map(l=>bboxRing(l.ring));
+    const all=[Math.min(...bbs.map(b=>b[0])),Math.min(...bbs.map(b=>b[1])),Math.max(...bbs.map(b=>b[2])),Math.max(...bbs.map(b=>b[3]))];
+    const gs=await granulos(all,ini,fin);
+    if(!gs.length){status("No hay pasadas DSWx-S1 sobre estos lotes en ese período",4000);return;}
+    const tareas=[]; LOTES.forEach((l,i)=>gs.forEach(g=>{ if(!g.bb||corta(bbs[i],g.bb)) tareas.push({l,g}); }));
+    const res={}; let hechas=0, errores=0, cors=false;
+    const trabajar=async()=>{ while(tareas.length){ const {l,g}=tareas.shift();
+      try{ const k=await estadisticas(l,g.ur,c); const valid=DSWX.validas.reduce((a,v)=>a+(k[v]||0),0);
+        if(valid>0){ const agua=DSWX.agua.reduce((a,v)=>a+(k[v]||0),0), veg=DSWX.veg.reduce((a,v)=>a+(k[v]||0),0);
+          const prev=(res[l.id]=res[l.id]||{})[g.fecha]; if(!prev||valid>prev.n) res[l.id][g.fecha]={n:valid,agua,veg,ur:g.ur}; } }
+      catch(e){ errores++; if(e instanceof TypeError) cors=true; }
+      hechas++; status(`Midiendo: ${hechas} de ${hechas+tareas.length} consultas…`); } };
+    await Promise.all([trabajar(),trabajar(),trabajar(),trabajar()]);
+    if(cors&&!Object.keys(res).length){ status("El servidor rechazó la consulta desde el navegador (CORS). Configurá el proxy del VPS en Servidor o usá el pipeline de Earth Engine.",8000); return; }
+    RES={}; Object.entries(res).forEach(([id,porFecha])=>{ RES[id]=Object.entries(porFecha).filter(([,o])=>o.n>=10).map(([f,o])=>{const p=o.agua/o.n,se=Math.sqrt(p*(1-p)/Math.max(1,o.n/DEFF));
+      return {fecha:f,pct:Math.round(p*100),lo:Math.round(Math.max(0,p-1.96*se)*100),hi:Math.round(Math.min(1,p+1.96*se)*100),veg:Math.round(o.veg/o.n*100),n:o.n,ur:o.ur};}).sort((a,b)=>a.fecha<b.fecha?-1:1); });
+    status(`Listo: ${Object.keys(RES).length} lotes medidos con ${gs.length} pasadas${errores?` (${errores} consultas fallidas)`:""}`,5000);
+    pintarLotes(); seleccionar(SEL||LOTES[0].id);
+  }catch(e){ console.error(e); status("No se pudo medir: "+e.message,6000); }
+  finally{ $("medir").disabled=false; }
+}
+$("medir").onclick=medir;
+function exportarCSV(){ const filas=["id,fecha,pct,ic_lo,ic_hi,pct_veg,n,granulo,version"];
+  Object.entries(RES).forEach(([id,o])=>o.forEach(x=>filas.push([id,x.fecha,x.pct,x.lo,x.hi,x.veg??"",x.n,x.ur||"","napa-dswx-navegador-v0.3"].join(","))));
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([filas.join("\n")],{type:"text/csv"}));a.download="napa_resultados.csv";a.click(); }
+$("uPct").oninput=$("uDias").oninput=()=>{pintarLotes();if(SEL)seleccionar(SEL);};
+const DIA=(f)=>Date.parse(f)/864e5;
+function duracion(obs){const U=+$("uPct").value;let min=0,max=0;for(let k=0;k<obs.length-1;k++){const dt=DIA(obs[k+1].fecha)-DIA(obs[k].fecha);
+  if(obs[k].lo>=U&&obs[k+1].lo>=U)min+=dt;if(obs[k].hi>=U||obs[k+1].hi>=U)max+=dt;}return {min,max};}
+function estado(id){const o=RES[id];if(!o||!o.length)return "x";const d=duracion(o),N=+$("uDias").value;return d.min>=N?"r":d.max>=N?"a":"g";}
+const COL={r:"#d9443a",a:"#d99a1e",g:"#3a9a62",x:"#bbbbbb"}, PILL={r:'<span class="pill p-r">Siniestro</span>',a:'<span class="pill p-a">Revisión</span>',g:'<span class="pill p-g">Sin siniestro</span>',x:'<span class="pill p-x">Sin datos</span>'};
+const MARCAS={};
+function etiquetas(){
+  Object.keys(MARCAS).forEach(id=>{if(!LOTES.some(l=>l.id===id)){MARCAS[id].remove();delete MARCAS[id];}});
+  LOTES.forEach(l=>{const c=l.ring.slice(0,-1),lng=c.reduce((a,p)=>a+p[0],0)/c.length,lat=c.reduce((a,p)=>a+p[1],0)/c.length,est=estado(l.id);
+    if(!MARCAS[l.id]){const el=document.createElement("div");el.style.cssText="background:rgba(255,255,255,.95);border-radius:8px;padding:3px 8px;font-size:12px;box-shadow:0 1px 3px rgba(0,0,0,.25);white-space:nowrap;cursor:pointer";el.onclick=(e)=>{e.stopPropagation();seleccionar(l.id);};MARCAS[l.id]=new maplibregl.Marker({element:el,anchor:"bottom"}).setLngLat([lng,lat]).addTo(map);}
+    const el=MARCAS[l.id].getElement(), o=RES[l.id], d=o&&o.length?duracion(o):null;
+    el.innerHTML=`<i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${COL[est]};margin-right:6px"></i><b>${l.nombre}</b> · ${l.ha.toFixed(0)} ha${d?` · ${d.min}–${d.max} días`:""}`;
+    el.style.outline=l.id===SEL?"2px solid #16324f":"none";});
+}
+function pintarLotes(){
+  etiquetas();
+  if(map.getSource("lotes")) map.getSource("lotes").setData({type:"FeatureCollection",features:LOTES.map(l=>({type:"Feature",properties:{id:l.id,color:COL[estado(l.id)],sel:l.id===SEL,etiqueta:`${l.nombre}\n${l.ha.toFixed(0)} ha`},geometry:{type:"Polygon",coordinates:[l.ring]}}))});
+  $("lotes").innerHTML = LOTES.length ? LOTES.map(l=>`<div class="lot" data-id="${l.id}"><div><input type="text" value="${l.nombre}" data-n="${l.id}" aria-label="Nombre del lote"><div class="hint" style="margin:2px 0 0">${l.id} · ${l.ha.toFixed(1)} ha</div></div><div style="text-align:right">${PILL[estado(l.id)]}<br><button data-del="${l.id}" style="margin-top:4px;padding:2px 8px;font-size:12px">Quitar</button></div></div>`).join("") : "";
+  document.querySelectorAll("[data-n]").forEach(el=>{el.onclick=(e)=>e.stopPropagation();el.onchange=()=>{LOTES.find(l=>l.id===el.dataset.n).nombre=el.value;pintarLotes();};});
+  document.querySelectorAll("[data-del]").forEach(el=>el.onclick=(e)=>{e.stopPropagation();LOTES=LOTES.filter(l=>l.id!==el.dataset.del);if(SEL===el.dataset.del)SEL=null;pintarLotes();});
+  document.querySelectorAll(".lot").forEach(el=>el.onclick=()=>seleccionar(el.dataset.id));
+}
+function grafico(obs){
+  const W=330,H=130,pl=28,pb=20,pt=8,U=+$("uPct").value,t0=DIA(obs[0].fecha),t1=DIA(obs[obs.length-1].fecha)||t0+1;
+  const X=(f)=>pl+(DIA(f)-t0)/Math.max(1,t1-t0)*(W-pl-12),Y=(v)=>pt+(H-pt-pb)*(1-v/100);
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Porcentaje del lote con agua por pasada">`;
+  [0,50,100].forEach(v=>s+=`<line x1="${pl}" x2="${W-6}" y1="${Y(v)}" y2="${Y(v)}" stroke="#eee"/><text x="${pl-4}" y="${Y(v)+3}" font-size="9" text-anchor="end" fill="#888">${v}%</text>`);
+  s+=`<line x1="${pl}" x2="${W-6}" y1="${Y(U)}" y2="${Y(U)}" stroke="#c8372d" stroke-dasharray="4 3"/>`;
+  s+=`<polyline fill="none" stroke="#2f6fd6" stroke-width="1.5" points="${obs.map(o=>`${X(o.fecha)},${Y(o.pct)}`).join(" ")}"/>`;
+  obs.forEach(o=>{const x=X(o.fecha);s+=`<line x1="${x}" x2="${x}" y1="${Y(o.hi)}" y2="${Y(o.lo)}" stroke="#16191c"/><circle cx="${x}" cy="${Y(o.pct)}" r="3.2" fill="${o.lo>=U?'#2f6fd6':'#fff'}" stroke="#2f6fd6" stroke-width="1.5"><title>${o.fecha}: ${o.pct}% (${o.lo}–${o.hi}%)${o.veg!=null?` · bajo vegetación ${o.veg}%`:""}</title></circle>`;});
+  s+=`<text x="${pl}" y="${H-5}" font-size="9" fill="#888">${obs[0].fecha}</text><text x="${W-6}" y="${H-5}" font-size="9" text-anchor="end" fill="#888">${obs[obs.length-1].fecha}</text></svg>`;
+  return s;
+}
+function seleccionar(id){
+  SEL=id; pintarLotes(); const l=LOTES.find(x=>x.id===id); if(!l){$("detalle").innerHTML="";return;}
+  const b=new maplibregl.LngLatBounds(); l.ring.forEach(p=>b.extend(p)); map.fitBounds(b,{padding:140,maxZoom:14,pitch:60,duration:1100});
+  const o=RES[id];
+  if(!o||!o.length){$("detalle").innerHTML=`<p class="hint"><b>${l.nombre}</b> (${l.ha.toFixed(1)} ha): todavía sin resultados. Exportá los lotes, corré el pipeline y cargá el CSV.</p>`;return;}
+  const d=duracion(o), pk=o.reduce((a,b)=>b.pct>a.pct?b:a), est=estado(id);
+  $("detalle").innerHTML=`<div class="row"><b>${l.nombre}</b>${PILL[est]}</div>
+   <div class="kpis"><div><small>Días garantizados</small><b>${d.min}</b></div><div><small>Días posibles</small><b>${d.max}</b></div>
+   <div><small>Pico con agua</small><b>${pk.pct}%</b><small>${pk.lo}–${pk.hi}% · ${pk.fecha}</small></div><div><small>Pasadas</small><b>${o.length}</b><small>${o[0].fecha} a ${o[o.length-1].fecha}</small></div></div>
+   ${grafico(o)}<div class="btns" style="margin-top:6px"><button onclick="exportarCSV()">Exportar resultados (CSV)</button></div><p class="hint">Vegetación inundada en el pico: ${pk.veg!=null?pk.veg+"%":"—"}. Fuente: NASA OPERA DSWx-S1${pk.ur?` (gránulo ${pk.ur})`:""}. Punto lleno: pasada con agua confirmada (límite inferior del intervalo sobre el umbral). Clic en una fecha del panel de pasadas para ver la imagen de radar de ese día.</p>`;
+}
+renderCapas();
+</script>
+<script>
+/* Carga MapLibre desde unpkg y, si falla, desde jsDelivr; después arranca la app. */
+(function(){
+  var URLS=["https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl","https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl"];
+  function arrancar(){ var s=document.createElement("script"); s.textContent=[].map.call(document.querySelectorAll('script[type="text/napa"]'),function(x){return x.textContent;}).join("\n;\n"); document.body.appendChild(s); }
+  function fallo(){ document.body.innerHTML='<div style="font:16px/1.5 system-ui;color:#eee;background:#081018;position:fixed;inset:0;display:grid;place-items:center;padding:24px;text-align:center"><div><b style="font-size:20px">No se pudo cargar la librería de mapas.</b><br>Abrí este archivo con Chrome o Edge en una computadora con internet (no desde la vista previa del celular ni del chat).</div></div>'; }
+  function probar(i){
+    if(window.maplibregl) return arrancar();
+    if(i>=URLS.length) return fallo();
+    var l=document.createElement("link"); l.rel="stylesheet"; l.href=URLS[i]+".css"; document.head.appendChild(l);
+    var s=document.createElement("script"); s.src=URLS[i]+".js"; s.onload=function(){ probar(window.maplibregl?i:i+1); }; s.onerror=function(){ probar(i+1); }; document.head.appendChild(s);
+  }
+  probar(0);
+})();
+</script>
+</body>
+</html>

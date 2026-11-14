@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Napa · lo que el radar de la NASA vio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script>
+<style>
+:root{--bg:#081018;--panel:rgba(10,18,28,.86);--ink:#eef2f5;--ink2:#a9b4bf;--ink3:#6f7c88;--line:rgba(255,255,255,.12);
+  --agua:#3d8bff;--veg:#a07cff;--red:#ff5a4f;--amb:#f2a93b;--grn:#3fbf7f;--disp:"Space Grotesk",Inter,system-ui,sans-serif}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;overflow:hidden}
+#mapL,#mapR{position:absolute;inset:0}#mapR{clip-path:inset(0 0 0 50%)}
+body:not(.a1) #mapL{visibility:hidden}body:not(.a1) #mapR{clip-path:none}
+.maplibregl-ctrl-attrib{font-size:10px;background:rgba(0,0,0,.45)!important;color:#bbb}.maplibregl-ctrl-attrib a{color:#ddd}
+header{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;gap:18px;padding:14px 20px;z-index:20;background:linear-gradient(#081018ee,#08101800)}
+.logo{font-family:var(--disp);font-weight:700;font-size:20px;letter-spacing:.04em}.logo small{font-weight:400;color:var(--ink3);font-size:12px;margin-left:8px;letter-spacing:0}
+nav{display:flex;gap:6px}nav button{font:500 13px var(--disp);color:var(--ink2);background:transparent;border:1px solid var(--line);border-radius:99px;padding:6px 14px;cursor:pointer}
+nav button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.sp{flex:1}.ico{background:transparent;border:1px solid var(--line);color:var(--ink2);border-radius:99px;padding:6px 12px;cursor:pointer;font:13px Inter}
+.titulo{position:absolute;left:24px;top:70px;z-index:10;max-width:560px;pointer-events:none}
+.titulo h1{font:600 38px/1.08 var(--disp);margin:0;letter-spacing:-.02em;text-shadow:0 2px 18px #000a}.titulo p{color:var(--ink2);font-size:16px;line-height:1.45;margin:10px 0 0;text-shadow:0 1px 8px #000}
+.lado{position:absolute;top:150px;z-index:10;font:600 12px var(--disp);letter-spacing:.08em;text-transform:uppercase;background:var(--panel);border:1px solid var(--line);padding:8px 12px;border-radius:8px}
+.lado small{display:block;font:400 12px Inter;letter-spacing:0;text-transform:none;color:var(--ink2);margin-top:2px}
+#ladoL{left:24px;top:auto;bottom:190px}#ladoR{right:24px;top:auto;bottom:190px;text-align:right}
+body:not(.a1) .solo1,body:not(.a2) .solo2,body:not(.a3) .solo3{display:none!important}
+#swipe{position:absolute;top:0;bottom:0;left:50%;width:0;z-index:12}
+#swipe:before{content:"";position:absolute;top:0;bottom:0;left:-1px;width:2px;background:#fff;box-shadow:0 0 12px #000}
+#swipe i{position:absolute;top:50%;left:-22px;width:44px;height:44px;margin-top:-22px;border-radius:50%;background:#fff;color:#081018;display:grid;place-items:center;font:700 16px var(--disp);cursor:ew-resize;box-shadow:0 2px 12px #0008}
+.barra{position:absolute;left:24px;right:24px;bottom:22px;z-index:15;display:grid;grid-template-columns:auto 1fr auto;gap:22px;align-items:end;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px;backdrop-filter:blur(6px)}
+#play{width:52px;height:52px;border-radius:50%;border:0;background:var(--ink);color:var(--bg);font-size:20px;cursor:pointer}
+.fechaBig{font:600 26px var(--disp)}.fechaBig small{display:block;font:400 12px Inter;color:var(--ink3)}
+.cont{text-align:right}.cont b{font:700 44px/1 var(--disp);color:var(--agua);letter-spacing:-.02em;font-variant-numeric:tabular-nums}.cont span{font:500 18px var(--disp);color:var(--agua)}
+.cont small{display:block;color:var(--ink2);font-size:12px;margin-top:4px;max-width:330px;margin-left:auto}
+#spark{width:100%;height:64px;display:block;cursor:pointer}
+.lado2{position:absolute;left:24px;bottom:24px;z-index:12;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;gap:16px;align-items:center;max-width:430px}
+#qr{background:#fff;border-radius:8px;padding:8px;line-height:0}#qr img{width:132px;height:132px;image-rendering:pixelated}
+.lado2 p{margin:0;color:var(--ink2);font-size:13px;line-height:1.45}.lado2 b{color:var(--ink);font:600 16px var(--disp);display:block;margin-bottom:4px}
+#cert{position:absolute;right:20px;top:70px;bottom:20px;width:400px;z-index:18;background:#f7f6f2;color:#16191c;border-radius:16px;box-shadow:0 10px 40px #000a;overflow:auto;display:none;padding:22px}
+#cert.on{display:block;animation:entra .35s ease}@keyframes entra{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
+#cert .x{position:absolute;top:10px;right:12px;border:0;background:none;font-size:22px;cursor:pointer;color:#888}
+.ce-k{font:600 11px var(--disp);letter-spacing:.1em;text-transform:uppercase;color:#7a8088}
+.ce-h{font:700 24px/1.15 var(--disp);margin:6px 0 4px;letter-spacing:-.01em}.ce-s{color:#555c63;font-size:13px}
+.ce-est{border-radius:12px;padding:14px;margin:14px 0;color:#fff}.ce-est b{font:700 22px/1.15 var(--disp);display:block}.ce-est small{opacity:.9;font-size:13px}
+.ce-r{background:#c8372d}.ce-a{background:#b07408}.ce-g{background:#2f7d4f}.ce-x{background:#868c92}
+.ce-kp{display:grid;grid-template-columns:1fr 1fr;gap:8px}.ce-kp div{background:#fff;border:1px solid #e2e0d9;border-radius:10px;padding:10px}.ce-kp small{display:block;color:#555c63;font-size:11px}.ce-kp b{font:700 26px var(--disp)}
+.tira{display:flex;gap:3px;margin:12px 0 4px}.tira i{flex:1;height:34px;border-radius:4px;position:relative}.tira i.c:after{content:"";position:absolute;left:50%;bottom:-6px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:#16191c}
+.tiraF{display:flex;justify-content:space-between;font-size:11px;color:#7a8088}
+.ce-ev{font-size:12px;color:#555c63;line-height:1.5;margin-top:14px;border-top:1px solid #e2e0d9;padding-top:12px}.ce-ev a{color:#2f6fd6}
+.ce-ev ol{margin:6px 0 0;padding-left:18px;max-height:120px;overflow:auto}
+.ce-btn{margin-top:12px;display:flex;gap:8px}.ce-btn button{font:500 13px Inter;border:1px solid #d6d3ca;background:#fff;border-radius:8px;padding:8px 12px;cursor:pointer}
+.ce-btn button.pri{background:#16324f;color:#fff;border-color:#16324f}
+.carga{display:flex;align-items:center;gap:10px;color:#555c63;font-size:14px;margin-top:18px}.carga:before{content:"";width:16px;height:16px;border:2px solid #ccc;border-top-color:#16324f;border-radius:50%;animation:gira .8s linear infinite}@keyframes gira{to{transform:rotate(360deg)}}
+.tot{position:absolute;right:24px;bottom:24px;z-index:12;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;width:380px}
+.tot .n{font:700 46px/1 var(--disp);letter-spacing:-.02em;font-variant-numeric:tabular-nums}.tot .l{color:var(--ink2);font-size:13px;margin:4px 0 14px}
+.tot .fila{display:flex;justify-content:space-between;font-size:14px;padding:6px 0;border-top:1px solid var(--line)}.tot .fila i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:8px}
+.cierre{position:absolute;left:24px;bottom:24px;z-index:12;font:600 30px/1.15 var(--disp);max-width:560px;text-shadow:0 2px 16px #000}
+#splash{position:absolute;inset:0;z-index:40;display:grid;place-items:center;background:radial-gradient(ellipse at 30% 20%,#12263bcc,#081018f2 60%)}
+#splash .c{max-width:560px;padding:24px}#splash h2{font:700 40px/1.1 var(--disp);margin:0 0 12px;letter-spacing:-.02em}#splash p{color:var(--ink2);line-height:1.5}
+#splash .b{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}#splash button,#splash label{font:600 14px var(--disp);border-radius:10px;padding:12px 18px;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--ink)}
+#splash button.pri{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.prog{height:6px;background:#ffffff1a;border-radius:9px;overflow:hidden;margin-top:18px}.prog i{display:block;height:100%;width:0;background:var(--agua);transition:width .2s}
+#progT{font-size:13px;color:var(--ink2);margin-top:8px;min-height:18px}
+#ajustes{position:absolute;top:60px;right:20px;z-index:45;background:#0f1a26;border:1px solid var(--line);border-radius:12px;padding:16px;width:340px;display:none;font-size:13px}
+#ajustes.on{display:block}#ajustes label{display:block;margin:10px 0 4px;color:var(--ink2)}#ajustes input{width:100%;font:13px Inter;background:#081018;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 9px}
+#ajustes .dos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#aviso{position:absolute;top:64px;left:50%;transform:translateX(-50%);z-index:50;background:#16191cee;border:1px solid var(--line);padding:9px 14px;border-radius:10px;font-size:13px;display:none;max-width:90vw;text-align:center}
+#prueba{position:absolute;bottom:0;left:0;right:0;z-index:60;background:#c8372d;color:#fff;text-align:center;font:600 12px var(--disp);letter-spacing:.08em;padding:4px;display:none}
+.leyenda{display:flex;gap:14px;font-size:12px;color:var(--ink2);margin-top:6px}.leyenda i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+/* celular */
+body.campo header nav,body.campo .titulo,body.campo .barra,body.campo .lado,body.campo #swipe,body.campo .lado2,body.campo .tot,body.campo .cierre{display:none!important}
+.movil{display:none}body.campo .movil{display:block;position:absolute;left:0;right:0;top:56px;z-index:12;padding:10px 16px;background:linear-gradient(#081018ee,#08101800)}
+.movil h1{font:700 26px/1.1 var(--disp);margin:0}.movil p{color:var(--ink2);font-size:14px;margin:6px 0 10px}.movil button{font:600 14px var(--disp);border:0;border-radius:10px;padding:10px 14px;background:var(--ink);color:var(--bg)}
+@media (max-width:760px){#cert{left:8px;right:8px;top:auto;bottom:8px;width:auto;max-height:78vh}.titulo h1{font-size:26px}.barra{grid-template-columns:auto 1fr}.barra .cont{grid-column:1/-1;text-align:left}.cont small{margin-left:0}}
+@media print{body *{visibility:hidden}#cert,#cert *{visibility:visible}#cert{position:absolute;inset:0;width:auto;box-shadow:none;overflow:visible}#cert .x,.ce-btn{display:none}}
+</style>
+</head>
+<body class="a1">
+<div id="mapL"></div><div id="mapR"></div>
+<div id="swipe" class="solo1"><i>⇔</i></div>
+
+<header>
+  <div class="logo">NAPA<small>Space Apps 2026 · Dancing with the SARs</small></div>
+  <nav><button data-a="1" class="on">1 · Lo que nadie vio</button><button data-a="2">2 · Tu campo</button><button data-a="3">3 · Todos los campos</button></nav>
+  <div class="sp"></div><button class="ico" id="bAj" aria-label="Ajustes">Ajustes</button>
+</header>
+
+<div class="titulo solo1"><h1>Abril de 2026. Llovió semanas sobre el norte santafesino.</h1><p>Los satélites ópticos vieron nubes. El radar de la NASA vio el agua.</p></div>
+<div class="lado solo1" id="ladoL">Óptico<small id="ladoLt">NASA MODIS Terra · mismo día</small></div>
+<div class="lado solo1" id="ladoR">Radar<small>NASA OPERA DSWx-S1 · Sentinel-1</small></div>
+<div class="barra solo1">
+  <button id="play" aria-label="Reproducir">▶</button>
+  <div><div class="fechaBig" id="fBig">—<small>fecha de la pasada de radar</small></div><svg id="spark" viewBox="0 0 600 64" preserveAspectRatio="none" aria-label="Hectáreas con agua por fecha"></svg>
+    <div class="leyenda"><span><i style="background:var(--agua)"></i>Agua abierta</span><span><i style="background:var(--veg)"></i>Agua bajo vegetación</span><span style="opacity:.75"><i style="background:var(--agua);opacity:.45"></i>Último dato de días anteriores</span></div></div>
+  <div class="cont"><b id="cnt">0</b> <span>ha bajo agua</span><small id="cntS">según el último dato de radar de cada lugar</small></div>
+</div>
+
+<div class="titulo solo2"><h1>Tocá cualquier campo.</h1><p>En segundos, su constancia: cuántos días estuvo bajo agua, con la pasada de la NASA de cada fecha como evidencia.</p></div>
+<div class="lado2 solo2"><div id="qr"></div><div><b>Probalo en tu celular</b><p id="qrT">Escaneá el código, tocá un punto del norte santafesino y recibí la constancia de ese campo.</p></div></div>
+
+<div class="titulo solo3"><h1>Todos los campos. Ni un solo trámite.</h1><p id="t3s">Cada cuadro es una parcela de unas 110 hectáreas medida pasada por pasada. Tocá una para ver su constancia.</p></div>
+<div class="tot solo3"><div class="n" id="t3n">—</div><div class="l" id="t3l">hectáreas con más de 10 días bajo agua, confirmadas por radar</div>
+  <div class="fila"><span><i style="background:var(--red)"></i>Confirmado: más de <span class="uD">10</span> días</span><b id="t3r">—</b></div>
+  <div class="fila"><span><i style="background:var(--amb)"></i>Posible: revisar en el campo</span><b id="t3a">—</b></div>
+  <div class="fila"><span><i style="background:var(--grn)"></i>Sin anegamiento prolongado</span><b id="t3g">—</b></div></div>
+<div class="cierre solo3">De la declaración jurada<br>a la prueba satelital.</div>
+
+<div class="movil"><h1>Tocá tu campo</h1><p>Constancia de anegamiento con el radar de la NASA (marzo a mayo de 2026).</p><button id="miUbic">Usar mi ubicación</button></div>
+
+<div id="cert"></div>
+<div id="aviso"></div>
+<div id="prueba">DATOS DE PRUEBA SIMULADOS · NO SON DATOS REALES</div>
+
+<div id="ajustes">
+  <b>Ajustes</b>
+  <label>Servidor titiler-cmr (o el proxy del VPS)</label><input id="aSrv" type="text">
+  <div class="dos"><div><label>Desde</label><input id="aIni" type="date"></div><div><label>Hasta</label><input id="aFin" type="date"></div></div>
+  <div class="dos"><div><label>Agua en la parcela (%)</label><input id="aU" type="number" min="1" max="100"></div><div><label>Días mínimos</label><input id="aN" type="number" min="1"></div></div>
+  <label>Zona (oeste, sur, este, norte)</label><input id="aZ" type="text">
+  <div style="display:flex;gap:8px;margin-top:12px"><button class="ico" id="aOk">Aplicar</button><button class="ico" id="aGuardar">Guardar mediciones</button></div>
+</div>
+
+<div id="splash"><div class="c">
+  <h2>La inundación del norte santafesino, medida con el radar de la NASA.</h2>
+  <p>Se descargan los mapas de agua NASA OPERA DSWx-S1 de cada pasada de Sentinel-1 entre el <b id="spIni"></b> y el <b id="spFin"></b> sobre <b id="spHa"></b> y se mide cada parcela, pasada por pasada. Tarda uno o dos minutos; después la presentación funciona al instante. Hacelo antes de presentar y guardá las mediciones.</p>
+  <div class="b"><button class="pri" id="bMedir">Medir la inundación</button><label>Cargar mediciones guardadas<input type="file" id="bCargar" accept=".json" hidden></label></div>
+  <div class="prog"><i id="progB"></i></div><div id="progT"></div>
+</div></div>
+
+<script type="text/napa">
+/* =========================================================================
+   Napa · demo de presentación. Todo lo que se mide sale de NASA OPERA DSWx-S1
+   (mapa de agua de 30 m derivado de Sentinel-1) leído con titiler-cmr.
+   Clases WTR: 0 seco, 1 agua abierta, 2 (reservado), 3 vegetación inundada,
+   250+ máscaras (HAND, sombra, océano, sin dato) → no observado.
+   ========================================================================= */
+const PRUEBA = /[?&]prueba\b/.test(location.search);
+const CAMPO = location.hash === "#campo";
+const $ = (id)=>document.getElementById(id);
+const LS = (k,v)=>{ try{ if(v===undefined) return localStorage.getItem("napa."+k); localStorage.setItem("napa."+k,v); }catch(e){ return null; } };
+const CFG = {
+  srv: LS("srv") || "https://titiler-cmr.opengeos.org",
+  ini: LS("ini") || "2026-03-20", fin: LS("fin") || "2026-05-31",
+  U: +(LS("U") || 30), N: +(LS("N") || 10),
+  zona: (LS("zona") || "-60.95,-29.75,-59.95,-28.85").split(",").map(Number)
+};
+const SN = "OPERA_L3_DSWX-S1_V1", ASSET = "B01_WTR", REGEX = "B[0-9]{2}_[A-Z]+";
+const Z0 = 10, ZC = 12, T = 256, B = 8, DEFF = 3, LADO_KM = 1.0;
+const MASK = {"250":[0,0,0,0],"251":[0,0,0,0],"252":[0,0,0,0],"253":[0,0,0,0],"254":[0,0,0,0],"255":[0,0,0,0]};
+const CM_ANAL = Object.assign({"0":[255,255,255,255],"1":[0,0,255,255],"2":[0,0,255,255],"3":[255,0,255,255]},MASK);
+const CM_VIS  = Object.assign({"0":[0,0,0,0],"1":[61,139,255,230],"2":[61,139,255,230],"3":[160,124,255,230]},MASK);
+const fmt = (v)=>Math.round(v).toLocaleString("es-AR");
+const fmtF = (f)=>new Date(f+"T12:00:00Z").toLocaleDateString("es-AR",{day:"numeric",month:"long",year:"numeric",timeZone:"UTC"});
+const fmtC = (f)=>new Date(f+"T12:00:00Z").toLocaleDateString("es-AR",{day:"numeric",month:"short",timeZone:"UTC"});
+const aviso = (t,ms)=>{const a=$("aviso");a.textContent=t;a.style.display=t?"block":"none";if(ms)setTimeout(()=>{if(a.textContent===t)a.style.display="none";},ms);};
+const DIA = (f)=>Date.parse(f)/864e5;
+
+/* ---------- geometría Web Mercator ---------- */
+const lon2t=(lon,z)=>(lon+180)/360*2**z;
+const lat2t=(lat,z)=>{const r=lat*Math.PI/180;return (1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*2**z;};
+const t2lon=(x,z)=>x/2**z*360-180;
+const t2lat=(y,z)=>{const n=Math.PI-2*Math.PI*y/2**z;return 180/Math.PI*Math.atan(Math.sinh(n));};
+const haPx=(lat,z)=>{const m=40075016.686*Math.cos(lat*Math.PI/180)/(T*2**z);return m*m/1e4;};
+
+/* ---------- NASA CMR y titiler-cmr ---------- */
+let CONCEPTO=null;
+async function concepto(){ if(CONCEPTO) return CONCEPTO;
+  const j=await (await fetch(`https://cmr.earthdata.nasa.gov/search/collections.umm_json?short_name=${SN}&page_size=1`)).json();
+  CONCEPTO=j.items&&j.items[0]&&j.items[0].meta["concept-id"]; if(!CONCEPTO) throw new Error("no se encontró DSWx-S1 en el catálogo de la NASA"); return CONCEPTO; }
+async function granulos(bb,ini,fin){
+  const out=[]; for(let p=1;p<=10;p++){
+    const u=`https://cmr.earthdata.nasa.gov/search/granules.umm_json?short_name=${SN}&bounding_box=${bb.map(v=>v.toFixed(5)).join(",")}&temporal=${ini}T00:00:00Z,${fin}T23:59:59Z&page_size=200&page_num=${p}&sort_key=start_date`;
+    const it=(await (await fetch(u)).json()).items||[];
+    it.forEach(g=>{const m=g.umm||{},r=((((m.SpatialExtent||{}).HorizontalSpatialDomain||{}).Geometry||{}).BoundingRectangles||[])[0];
+      out.push({ur:m.GranuleUR,fecha:((m.TemporalExtent||{}).RangeDateTime||{}).BeginningDateTime.slice(0,10),bb:r?[r.WestBoundingCoordinate,r.SouthBoundingCoordinate,r.EastBoundingCoordinate,r.NorthBoundingCoordinate]:null});});
+    if(it.length<200) break; }
+  return out; }
+const TPL={};
+async function plantilla(fecha,tipo){ const k=fecha+tipo; if(TPL[k]) return TPL[k];
+  const q=new URLSearchParams(); q.set("collection_concept_id",await concepto()); q.append("assets",ASSET); q.set("assets_regex",REGEX);
+  q.set("temporal",`${fecha}T00:00:00Z/${fecha}T23:59:59Z`); q.set("colormap",JSON.stringify(tipo==="vis"?CM_VIS:CM_ANAL));
+  q.set("tilesize",String(T)); q.set("tile_format","png"); q.set("minzoom","8"); q.set("maxzoom","14");
+  const r=await fetch(`${CFG.srv.replace(/\/+$/,"")}/rasterio/WebMercatorQuad/tilejson.json?${q}`); if(!r.ok) throw new Error("tilejson "+r.status);
+  const tj=await r.json(); return TPL[k]={tpl:tj.tiles[0],minzoom:tj.minzoom||0}; }
+const urlTile=(tpl,z,x,y)=>tpl.replace("{z}",z).replace("{x}",x).replace("{y}",y);
+
+/* Lee un tile categórico y devuelve clases por píxel: 0 sin dato, 1 seco, 2 agua, 3 agua bajo vegetación */
+const LIENZO=[];
+async function leerTile(url){
+  const r=await fetch(url); if(r.status===204||r.status===404) return null; if(!r.ok) throw new Error("tile "+r.status);
+  const bmp=await createImageBitmap(await r.blob());
+  const c=LIENZO.pop()||document.createElement("canvas"); c.width=T;c.height=T; const x=c.getContext("2d",{willReadFrequently:true});
+  x.imageSmoothingEnabled=false; x.clearRect(0,0,T,T); x.drawImage(bmp,0,0,T,T); const d=x.getImageData(0,0,T,T).data; LIENZO.push(c);
+  const out=new Uint8Array(T*T); let alguno=false;
+  for(let i=0,j=0;j<out.length;i+=4,j++){ if(d[i+3]<128) continue; const R=d[i],G=d[i+1],Bl=d[i+2];
+    out[j]= (R>200&&G>200) ? 1 : (R>200&&Bl>200) ? 3 : (Bl>200) ? 2 : 0; if(out[j]) alguno=true; }
+  return alguno?out:null; }
+async function enParalelo(tareas,n,fn){ let i=0; const w=async()=>{ while(i<tareas.length){ const t=tareas[i++]; await fn(t); } }; await Promise.all(Array.from({length:n},w)); }
+
+/* ---------- medición de la zona completa ---------- */
+let D=null;   // { fechas, z, tx0, ty0, nx, ny, W, H, cls:[Uint8Array], gran:{fecha:[{ur,bb}]} }
+let A=null;   // análisis: serie de hectáreas y estado por parcela
+async function medirZona(){
+  const prog=(f,t)=>{$("progB").style.width=Math.round(f*100)+"%";$("progT").textContent=t;};
+  $("bMedir").disabled=true;
+  try{
+    prog(0,"Buscando las pasadas de Sentinel-1 en el catálogo de la NASA…");
+    const gs=await granulos(CFG.zona,CFG.ini,CFG.fin); if(!gs.length) throw new Error("no hay pasadas DSWx-S1 sobre la zona en ese período");
+    const gran={}; gs.forEach(g=>(gran[g.fecha]=gran[g.fecha]||[]).push(g)); const fechas=Object.keys(gran).sort();
+    const p0=await plantilla(fechas[0],"anal"); const z=Math.max(Z0,p0.minzoom);
+    const tx0=Math.floor(lon2t(CFG.zona[0],z)),tx1=Math.floor(lon2t(CFG.zona[2],z)),ty0=Math.floor(lat2t(CFG.zona[3],z)),ty1=Math.floor(lat2t(CFG.zona[1],z));
+    const nx=tx1-tx0+1,ny=ty1-ty0+1,W=nx*T,H=ny*T; const cls=fechas.map(()=>new Uint8Array(W*H));
+    const tareas=[]; fechas.forEach((f,k)=>{for(let y=ty0;y<=ty1;y++)for(let x=tx0;x<=tx1;x++)tareas.push({f,k,x,y});});
+    let hechas=0,errores=0,red=0;
+    await enParalelo(tareas,6,async(t)=>{
+      try{ const p=await plantilla(t.f,"anal"); const a=await leerTile(urlTile(p.tpl,z,t.x,t.y));
+        if(a){ const ox=(t.x-tx0)*T, oy=(t.y-ty0)*T, dst=cls[t.k]; for(let r=0;r<T;r++) dst.set(a.subarray(r*T,r*T+T),(oy+r)*W+ox); } }
+      catch(e){ errores++; if(e instanceof TypeError) red++; }
+      hechas++; prog(hechas/tareas.length,`Midiendo ${fechas.length} pasadas de radar: ${hechas} de ${tareas.length} mosaicos${errores?` · ${errores} con error`:""}`);
+    });
+    if(red && red>=hechas*0.9) throw new Error("el navegador no pudo leer el servidor (CORS o sin conexión). Probá con el proxy del VPS en Ajustes");
+    D={fechas,z,tx0,ty0,nx,ny,W,H,cls,gran}; listo();
+  }catch(e){ console.error(e); prog(0,"No se pudo medir: "+e.message); }
+  finally{ $("bMedir").disabled=false; }
+}
+function analizar(){
+  const {fechas,z,ty0,W,H,cls}=D, CW=Math.ceil(W/B), CH=Math.ceil(H/B);
+  const haFila=new Float64Array(H); for(let r=0;r<H;r++) haFila[r]=haPx(t2lat(ty0+(r+.5)/T,z),z);
+  const c0=Math.max(0,Math.floor((lon2t(CFG.zona[0],z)-D.tx0)*T)), c1=Math.min(W,Math.ceil((lon2t(CFG.zona[2],z)-D.tx0)*T)),
+        r0=Math.max(0,Math.floor((lat2t(CFG.zona[3],z)-ty0)*T)), r1=Math.min(H,Math.ceil((lat2t(CFG.zona[1],z)-ty0)*T));
+  const comp=new Uint8Array(W*H), serie=[], cW=[], cV=[], cG=[];
+  fechas.forEach((f,k)=>{ const a=cls[k], w=new Uint16Array(CW*CH), v=new Uint16Array(CW*CH), g=new Uint16Array(CW*CH); let agua=0,veg=0,obs=0,obsHoy=0;
+    for(let r=r0;r<r1;r++){ const h=haFila[r], cr=(r/B|0)*CW, o=r*W;
+      for(let c=c0;c<c1;c++){ const x=a[o+c]; if(x){ comp[o+c]=x; obsHoy+=h; const ci=cr+(c/B|0); v[ci]++; if(x>1) w[ci]++; if(x===3) g[ci]++; }
+        const y=comp[o+c]; if(y){ obs+=h; if(y===2) agua+=h; else if(y===3) veg+=h; } } }
+    serie.push({fecha:f,agua,veg,obs,obsHoy}); cW.push(w); cV.push(v); cG.push(g); });
+  let zonaHa=0; for(let r=r0;r<r1;r++) zonaHa+=haFila[r]*(c1-c0);
+  const par=new Array(CW*CH); let tot={r:0,a:0,g:0,haR:0};
+  for(let ci=0;ci<CW*CH;ci++){ const r=Math.min(H-1,((ci/CW|0)+.5)*B|0), ha=haFila[r]*B*B, obs=[];
+    fechas.forEach((f,k)=>{ const n=cV[k][ci]; if(n>=16){ obs.push(punto(f,n,cW[k][ci],cG[k][ci])); } });
+    const e=estado(obs); par[ci]={e,obs,ha}; if(e!=="x"){ tot[e]++; if(e==="r") tot.haR+=ha; } }
+  A={serie,zonaHa,par,CW,CH,tot,haParcela:haFila[H>>1]*B*B,rng:[c0,c1,r0,r1]};
+}
+function punto(fecha,n,agua,veg,ur){ const p=agua/n, se=Math.sqrt(p*(1-p)/Math.max(1,n/DEFF));
+  return {fecha,pct:Math.round(p*100),lo:Math.round(Math.max(0,p-1.96*se)*100),hi:Math.round(Math.min(1,p+1.96*se)*100),veg:Math.round(veg/n*100),n,ur}; }
+function duracion(o){ let min=0,max=0; for(let k=0;k<o.length-1;k++){ const dt=DIA(o[k+1].fecha)-DIA(o[k].fecha);
+  if(o[k].lo>=CFG.U&&o[k+1].lo>=CFG.U) min+=dt; if(o[k].hi>=CFG.U||o[k+1].hi>=CFG.U) max+=dt; } return {min,max}; }
+function estado(o){ if(!o||o.length<2) return "x"; const d=duracion(o); return d.min>=CFG.N?"r":d.max>=CFG.N?"a":"g"; }
+
+/* ---------- mapas ---------- */
+const EOX="https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/{z}/{y}/{x}.jpg";
+const MODIS=(f)=>`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${f}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`;
+const VIIRS=(f)=>`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/${f}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`;
+const centro=[(CFG.zona[0]+CFG.zona[2])/2,(CFG.zona[1]+CFG.zona[3])/2];
+const VACIO="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+const estilo=(extra)=>({version:8,sources:Object.assign({base:{type:"raster",tiles:[EOX],tileSize:256,maxzoom:14,attribution:'Sentinel-2 cloudless 2024 by <a href="https://s2maps.eu">EOX</a>'}},extra.s),layers:[{id:"base",type:"raster",source:"base",paint:{"raster-brightness-max":.72,"raster-saturation":-.35}}].concat(extra.l)});
+const zonaCoords=()=>[[CFG.zona[0],CFG.zona[3]],[CFG.zona[2],CFG.zona[3]],[CFG.zona[2],CFG.zona[1]],[CFG.zona[0],CFG.zona[1]]];
+const mapL=new maplibregl.Map({container:"mapL",center:centro,zoom:8.6,pitch:30,attributionControl:{compact:true},
+  style:estilo({s:{opt:{type:"raster",tiles:[MODIS(CFG.ini)],tileSize:256,maxzoom:9,attribution:"NASA GIBS · MODIS Terra"}},l:[{id:"opt",type:"raster",source:"opt"}]})});
+const mapR=new maplibregl.Map({container:"mapR",center:centro,zoom:8.6,pitch:30,attributionControl:{compact:true},
+  style:estilo({s:{agua:{type:"image",url:VACIO,coordinates:zonaCoords()},hd:{type:"raster",tiles:["data:,"],tileSize:T,minzoom:8,maxzoom:14,attribution:"NASA OPERA DSWx-S1 vía titiler-cmr"},
+    parc:{type:"image",url:VACIO,coordinates:zonaCoords()},caja:{type:"geojson",data:{type:"FeatureCollection",features:[]}},
+    zona:{type:"geojson",data:{type:"Feature",geometry:{type:"Polygon",coordinates:[[...zonaCoords(),zonaCoords()[0]]]}}}},
+  l:[{id:"zona",type:"line",source:"zona",paint:{"line-color":"#ffffff","line-opacity":.35,"line-width":1,"line-dasharray":[3,3]}},
+     {id:"agua",type:"raster",source:"agua",paint:{"raster-fade-duration":0,"raster-resampling":"nearest"}},
+     {id:"hd",type:"raster",source:"hd",minzoom:11,layout:{visibility:"none"},paint:{"raster-fade-duration":150}},
+     {id:"parc",type:"raster",source:"parc",layout:{visibility:"none"},paint:{"raster-fade-duration":0,"raster-resampling":"nearest","raster-opacity":.82}},
+     {id:"caja",type:"line",source:"caja",paint:{"line-color":"#ffffff","line-width":3}},
+     {id:"cajaF",type:"fill",source:"caja",paint:{"fill-color":"#ffffff","fill-opacity":.12}}]})});
+mapR.addControl(new maplibregl.NavigationControl({visualizePitch:true}),"top-right");
+let sincro=false; const copia=(a,b)=>()=>{ if(sincro) return; sincro=true; b.jumpTo({center:a.getCenter(),zoom:a.getZoom(),bearing:a.getBearing(),pitch:a.getPitch()}); sincro=false; };
+mapR.on("move",copia(mapR,mapL)); mapL.on("move",copia(mapL,mapR));
+
+/* swipe */
+let corte=.5; function ponerCorte(f){ corte=Math.max(.04,Math.min(.96,f)); $("swipe").style.left=(corte*100)+"%"; $("mapR").style.clipPath=document.body.classList.contains("a1")?`inset(0 0 0 ${corte*100}%)`:"none"; }
+$("swipe").querySelector("i").addEventListener("pointerdown",(e)=>{ e.preventDefault(); const mv=(ev)=>ponerCorte(ev.clientX/innerWidth); const up=()=>{removeEventListener("pointermove",mv);removeEventListener("pointerup",up);}; addEventListener("pointermove",mv); addEventListener("pointerup",up); });
+
+/* ---------- acto 1: animación del agua ---------- */
+let K=0, timer=null, urlAgua=null, cntVal=0;
+const lienzoAgua=document.createElement("canvas");
+function coordsMosaico(){ const {z,tx0,ty0,nx,ny}=D; const w=t2lon(tx0,z),e=t2lon(tx0+nx,z),n=t2lat(ty0,z),s=t2lat(ty0+ny,z); return [[w,n],[e,n],[e,s],[w,s]]; }
+function cuadro(k){
+  K=k; const {W,H,cls,fechas}=D; lienzoAgua.width=W; lienzoAgua.height=H; const ctx=lienzoAgua.getContext("2d"); const im=ctx.createImageData(W,H), px=im.data;
+  const comp=new Uint8Array(W*H), edad=new Uint8Array(W*H);
+  const [c0,c1,r0,r1]=A.rng;
+  for(let j=0;j<=k;j++){ const a=cls[j]; for(let r=r0;r<r1;r++) for(let i=r*W+c0,e=r*W+c1;i<e;i++) if(a[i]){ comp[i]=a[i]; edad[i]=j; } }
+  for(let i=0,p=0;i<comp.length;i++,p+=4){ const c=comp[i]; if(c<2) continue; const fresco=edad[i]===k;
+    if(c===2){px[p]=61;px[p+1]=139;px[p+2]=255;} else {px[p]=160;px[p+1]=124;px[p+2]=255;} px[p+3]=fresco?235:120; }
+  ctx.putImageData(im,0,0);
+  lienzoAgua.toBlob((b)=>{ const u=URL.createObjectURL(b); mapR.getSource("agua").updateImage({url:u,coordinates:coordsMosaico()}); if(urlAgua) setTimeout(((o)=>()=>URL.revokeObjectURL(o))(urlAgua),2000); urlAgua=u; });
+  const s=A.serie[k]; $("fBig").innerHTML=`${fmtF(fechas[k])}<small>pasada ${k+1} de ${fechas.length} · radar Sentinel-1 procesado por NASA OPERA</small>`;
+  contar(s.agua+s.veg); $("cntS").textContent=`${fmt(s.veg)} ha de ellas bajo vegetación · zona medida de ${fmt(A.zonaHa)} ha`;
+  mapL.getSource("opt").setTiles([MODIS(fechas[k])]); spark();
+  if(timer===null) capaHD();
+}
+function contar(v){ const a=cntVal, t0=performance.now(); cntVal=v; const paso=()=>{ const f=Math.max(0,Math.min(1,(performance.now()-t0)/600)), e=1-Math.pow(1-f,3); $("cnt").textContent=fmt(a+(v-a)*e); if(f<1) requestAnimationFrame(paso); }; requestAnimationFrame(paso); }
+function spark(){ const s=A.serie, mx=Math.max(...s.map(o=>o.agua+o.veg))||1, X=(k)=>8+k/(Math.max(1,s.length-1))*584, Y=(v)=>58-v/mx*50;
+  let p=`<path d="M${s.map((o,k)=>`${X(k)},${Y(o.agua+o.veg)}`).join("L")}L${X(s.length-1)},60L8,60Z" fill="#3d8bff33"/><polyline fill="none" stroke="#3d8bff" stroke-width="2" points="${s.map((o,k)=>`${X(k)},${Y(o.agua+o.veg)}`).join(" ")}" vector-effect="non-scaling-stroke"/>`;
+  s.forEach((o,k)=>p+=`<circle cx="${X(k)}" cy="${Y(o.agua+o.veg)}" r="${k===K?5:2.5}" fill="${k===K?"#fff":"#3d8bff"}" vector-effect="non-scaling-stroke"/>`);
+  $("spark").innerHTML=p; }
+$("spark").onclick=(e)=>{ if(!A) return; const r=e.currentTarget.getBoundingClientRect(), f=(e.clientX-r.left)/r.width; parar(); cuadro(Math.round(Math.max(0,Math.min(1,(f*600-8)/584))*(D.fechas.length-1))); };
+function parar(){ if(timer){clearInterval(timer);timer=null;} $("play").textContent="▶"; capaHD(); }
+$("play").onclick=()=>{ if(!A) return; if(timer){parar();return;} mapR.setLayoutProperty("hd","visibility","none"); $("play").textContent="❚❚"; if(K>=D.fechas.length-1) cuadro(0);
+  timer=setInterval(()=>{ if(K>=D.fechas.length-1){parar();return;} cuadro(K+1); },1300); };
+async function capaHD(){ if(!D||PRUEBA) return; try{ const p=await plantilla(D.fechas[K],"vis"); mapR.getSource("hd").setTiles([p.tpl]); mapR.setLayoutProperty("hd","visibility","visible"); }catch(e){ console.warn("capa 30 m",e); } }
+
+/* ---------- acto 3: todas las parcelas ---------- */
+const COLP={r:[255,90,79,235],a:[242,169,59,225],g:[63,191,127,150]};
+function pintarParcelas(){
+  const {CW,CH,par,tot}=A, c=document.createElement("canvas"); c.width=CW;c.height=CH; const x=c.getContext("2d"), im=x.createImageData(CW,CH);
+  par.forEach((p,i)=>{ const col=COLP[p.e]; if(col) im.data.set(col,i*4); }); x.putImageData(im,0,0);
+  const {z,tx0,ty0}=D, w=t2lon(tx0,z),e=t2lon(tx0+CW*B/T,z),n=t2lat(ty0,z),s=t2lat(ty0+CH*B/T,z);
+  c.toBlob((b)=>mapR.getSource("parc").updateImage({url:URL.createObjectURL(b),coordinates:[[w,n],[e,n],[e,s],[w,s]]}));
+  $("t3n").textContent=fmt(tot.haR); $("t3r").textContent=`${fmt(tot.r)} parcelas`; $("t3a").textContent=`${fmt(tot.a)} parcelas`; $("t3g").textContent=`${fmt(tot.g)} parcelas`;
+  $("t3l").textContent=`hectáreas con más de ${CFG.N} días bajo agua, confirmadas por radar`; document.querySelectorAll(".uD").forEach(e=>e.textContent=CFG.N);
+  $("t3s").textContent=`Cada cuadro es una parcela de unas ${fmt(A.haParcela)} hectáreas medida pasada por pasada (cuadrícula; con el catastro se usan los campos reales). Tocá una para ver su constancia.`;
+}
+
+/* ---------- constancia de un campo ---------- */
+async function constancia(lng,lat){
+  const dlat=LADO_KM/2/111.32, dlon=LADO_KM/2/(111.32*Math.cos(lat*Math.PI/180)), bb=[lng-dlon,lat-dlat,lng+dlon,lat+dlat];
+  mapR.getSource("caja").setData({type:"Feature",geometry:{type:"Polygon",coordinates:[[[bb[0],bb[1]],[bb[2],bb[1]],[bb[2],bb[3]],[bb[0],bb[3]],[bb[0],bb[1]]]]}});
+  const ce=$("cert"); ce.classList.add("on"); ce.innerHTML=`<button class="x" onclick="cerrarCert()" aria-label="Cerrar">×</button><div class="ce-k">Constancia satelital de anegamiento</div><div class="ce-h">Campo en ${lat.toFixed(4)}, ${lng.toFixed(4)}</div><div class="carga" id="ceC">Buscando las pasadas de radar sobre este campo…</div>`;
+  try{
+    let gran;
+    if(D && lng>CFG.zona[0]&&lng<CFG.zona[2]&&lat>CFG.zona[1]&&lat<CFG.zona[3]) gran=D.gran;
+    else { gran={}; (await granulos(bb,CFG.ini,CFG.fin)).forEach(g=>(gran[g.fecha]=gran[g.fecha]||[]).push(g)); }
+    const fechas=Object.keys(gran).sort(); if(!fechas.length) throw new Error("no hay pasadas de radar sobre este punto en el período");
+    const z=ZC, x0=lon2t(bb[0],z),x1=lon2t(bb[2],z),y0=lat2t(bb[3],z),y1=lat2t(bb[1],z), obs=[]; let hechas=0;
+    await enParalelo(fechas,4,async(f)=>{ const k={1:0,2:0,3:0};
+      try{ const p=await plantilla(f,"anal");
+        for(let ty=Math.floor(y0);ty<=Math.floor(y1);ty++) for(let tx=Math.floor(x0);tx<=Math.floor(x1);tx++){
+          const a=await leerTile(urlTile(p.tpl,z,tx,ty)); if(!a) continue;
+          for(let r=0;r<T;r++){ const yy=ty+(r+.5)/T; if(yy<y0||yy>y1) continue; for(let c=0;c<T;c++){ const xx=tx+(c+.5)/T; if(xx<x0||xx>x1) continue; const v=a[r*T+c]; if(v) k[v]++; } } } }
+      catch(e){ console.warn(f,e); }
+      const n=k[1]+k[2]+k[3]; if(n>=10){ const g=(gran[f]||[]).find(g=>!g.bb||(lng>=g.bb[0]&&lng<=g.bb[2]&&lat>=g.bb[1]&&lat<=g.bb[3]))||(gran[f]||[])[0]; obs.push(punto(f,n,k[2]+k[3],k[3],g&&g.ur)); }
+      hechas++; const cc=$("ceC"); if(cc) cc.textContent=`Midiendo el campo en ${fechas.length} pasadas de radar: ${hechas} de ${fechas.length}…`; });
+    obs.sort((a,b)=>a.fecha<b.fecha?-1:1); verConstancia(lng,lat,bb,obs);
+  }catch(e){ console.error(e); const cc=$("ceC"); if(cc){cc.className="ce-s";cc.textContent="No se pudo medir: "+e.message;} }
+}
+function verConstancia(lng,lat,bb,obs){
+  const ha=(bb[2]-bb[0])*111.32*Math.cos(lat*Math.PI/180)*(bb[3]-bb[1])*111.32*100, e=estado(obs), d=obs.length>1?duracion(obs):{min:0,max:0};
+  const pk=obs.length?obs.reduce((a,b)=>b.pct>a.pct?b:a):null;
+  const EST={r:["Anegamiento prolongado confirmado",`Más de ${CFG.N} días con más del ${CFG.U}% del campo bajo agua, entre pasadas de radar consecutivas.`],
+    a:["Anegamiento posible: verificar en el campo","El radar no permite confirmarlo ni descartarlo con la confianza exigida. Corresponde una visita."],
+    g:["Sin anegamiento prolongado",`El campo no superó ${CFG.N} días con más del ${CFG.U}% bajo agua.`],x:["Sin datos suficientes","Hay menos de dos pasadas de radar válidas sobre este campo."]}[e];
+  const mapaC=(p)=>p>=CFG.U?`rgba(61,139,255,${.35+.65*p/100})`:`rgba(61,139,255,${.08+.3*p/100})`;
+  const ev=obs.map(o=>`<li>${fmtC(o.fecha)}: ${o.pct}% con agua (${o.lo} a ${o.hi}%)${o.veg?`, ${o.veg}% bajo vegetación`:""}${o.ur?` · <a href="https://cmr.earthdata.nasa.gov/search/granules.umm_json?short_name=${SN}&granule_ur=${encodeURIComponent(o.ur)}" target="_blank" rel="noopener">archivo NASA</a>`:""}</li>`).join("");
+  $("cert").innerHTML=`<button class="x" onclick="cerrarCert()" aria-label="Cerrar">×</button>
+   <div class="ce-k">Constancia satelital de anegamiento · prototipo</div>
+   <div class="ce-h">Campo de ${fmt(ha)} ha en ${lat.toFixed(4)}, ${lng.toFixed(4)}</div>
+   <div class="ce-s">Período ${fmtF(CFG.ini)} al ${fmtF(CFG.fin)}</div>
+   <div class="ce-est ce-${e}"><b>${EST[0]}</b><small>${EST[1]}</small></div>
+   <div class="ce-kp"><div><small>Días bajo agua confirmados</small><b>${d.min}</b></div><div><small>Días posibles</small><b>${d.max}</b></div>
+     <div><small>Pico</small><b>${pk?pk.pct+"%":"—"}</b><small>${pk?fmtC(pk.fecha):""}</small></div><div><small>Pasadas de radar</small><b>${obs.length}</b><small>cada una es evidencia</small></div></div>
+   <div class="tira">${obs.map(o=>`<i class="${o.lo>=CFG.U?"c":""}" style="background:${mapaC(o.pct)}" title="${fmtC(o.fecha)}: ${o.pct}%"></i>`).join("")}</div>
+   <div class="tiraF"><span>${obs[0]?fmtC(obs[0].fecha):""}</span><span>% del campo con agua por pasada · punto = confirmado</span><span>${obs.length?fmtC(obs[obs.length-1].fecha):""}</span></div>
+   <div class="ce-ev"><b>Evidencia</b>: mapa de agua NASA OPERA DSWx-S1 (30 m), derivado del radar Sentinel-1, que ve a través de las nubes. Cada fecha es una pasada; el intervalo es de 95% de confianza.<ol>${ev}</ol>
+     Método: los días confirmados solo cuentan intervalos entre dos pasadas cuyo límite inferior supera el ${CFG.U}%. No reemplaza el certificado oficial; es la prueba que lo respaldaría.</div>
+   <div class="ce-btn"><button class="pri" onclick="print()">Descargar constancia (PDF)</button><button onclick="cerrarCert()">Otro campo</button></div>`;
+}
+function cerrarCert(){ $("cert").classList.remove("on"); mapR.getSource("caja").setData({type:"FeatureCollection",features:[]}); }
+mapR.on("click",(e)=>{ if(CAMPO||document.body.classList.contains("a2")||document.body.classList.contains("a3")) constancia(e.lngLat.lng,e.lngLat.lat); });
+$("miUbic").onclick=()=>navigator.geolocation?navigator.geolocation.getCurrentPosition((p)=>{mapR.flyTo({center:[p.coords.longitude,p.coords.latitude],zoom:13});constancia(p.coords.longitude,p.coords.latitude);},()=>aviso("No se pudo obtener la ubicación. Tocá el mapa.",3000)):aviso("Tocá el mapa",2000);
+
+/* ---------- actos ---------- */
+function acto(n){
+  document.body.classList.remove("a1","a2","a3"); document.body.classList.add("a"+n); document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.a==n));
+  ponerCorte(corte); if(n!==1) parar(); if(n===1) cerrarCert();
+  try{ mapR.setLayoutProperty("parc","visibility",n===3?"visible":"none"); mapR.setLayoutProperty("agua","visibility",n===3?"none":"visible"); }catch(e){}
+  mapR.getCanvas().style.cursor=n===1?"":"crosshair";
+  if(n===2) qr(); setTimeout(()=>{mapL.resize();mapR.resize();},50);
+}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>acto(+b.dataset.a));
+addEventListener("keydown",(e)=>{ if(e.target.tagName==="INPUT"||CAMPO) return; if("123".includes(e.key)) acto(+e.key);
+  if(e.key===" "){e.preventDefault();$("play").click();} if(A&&document.body.classList.contains("a1")){ if(e.key==="ArrowRight"){parar();cuadro(Math.min(D.fechas.length-1,K+1));} if(e.key==="ArrowLeft"){parar();cuadro(Math.max(0,K-1));} }
+  if(e.key==="Escape") cerrarCert(); });
+function qr(){ const u=location.href.split("#")[0].replace(/[?&]prueba\b/,"")+"#campo";
+  if(location.protocol==="file:"){ $("qr").innerHTML='<div style="width:132px;height:132px;display:grid;place-items:center;color:#555;font:12px Inter;text-align:center;line-height:1.3;padding:8px">Publicá la página en el VPS para que el QR funcione</div>'; return; }
+  try{ const q=qrcode(0,"M"); q.addData(u); q.make(); $("qr").innerHTML=q.createImgTag(4,0); $("qrT").textContent="Escaneá, tocá un punto del norte santafesino y recibí la constancia de ese campo. "+u.replace(/^https?:\/\//,""); }catch(e){ $("qr").textContent=u; } }
+
+/* ---------- guardar y cargar mediciones ---------- */
+function empacar(a){ const o=new Uint8Array(Math.ceil(a.length/4)); for(let i=0;i<a.length;i++) o[i>>2]|=a[i]<<((i&3)*2); let s="",ch=0x8000; for(let i=0;i<o.length;i+=ch) s+=String.fromCharCode.apply(null,o.subarray(i,i+ch)); return btoa(s); }
+function desempacar(b,n){ const s=atob(b), a=new Uint8Array(n); for(let i=0;i<n;i++) a[i]=(s.charCodeAt(i>>2)>>((i&3)*2))&3; return a; }
+$("aGuardar").onclick=()=>{ if(!D){aviso("Primero medí la inundación",2500);return;} const {fechas,z,tx0,ty0,nx,ny,W,H,gran}=D;
+  const j=JSON.stringify({v:1,cfg:{ini:CFG.ini,fin:CFG.fin,zona:CFG.zona},fechas,z,tx0,ty0,nx,ny,W,H,gran,cls:D.cls.map(empacar),medido:new Date().toISOString(),prueba:PRUEBA});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([j],{type:"application/json"})); a.download="napa_mediciones.json"; a.click(); };
+$("bCargar").onchange=async(e)=>{ const f=e.target.files[0]; if(!f) return; try{ const j=JSON.parse(await f.text());
+  Object.assign(CFG,{ini:j.cfg.ini,fin:j.cfg.fin,zona:j.cfg.zona}); D={fechas:j.fechas,z:j.z,tx0:j.tx0,ty0:j.ty0,nx:j.nx,ny:j.ny,W:j.W,H:j.H,gran:j.gran,cls:j.cls.map(b=>desempacar(b,j.W*j.H))};
+  if(j.prueba) $("prueba").style.display="block"; listo(); }catch(err){ console.error(err); $("progT").textContent="No se pudo leer el archivo de mediciones"; } };
+const mapaListo=new Promise(r=>mapR.loaded()?r():mapR.once("load",r));
+async function listo(){ await mapaListo; analizar(); $("splash").style.display="none"; pintarParcelas(); cuadro(0);
+  mapR.fitBounds([[CFG.zona[0],CFG.zona[1]],[CFG.zona[2],CFG.zona[3]]],{padding:{top:120,bottom:200,left:40,right:40},pitch:30,duration:0}); }
+
+/* ---------- ajustes ---------- */
+function llenarAjustes(){ $("aSrv").value=CFG.srv;$("aIni").value=CFG.ini;$("aFin").value=CFG.fin;$("aU").value=CFG.U;$("aN").value=CFG.N;$("aZ").value=CFG.zona.join(",");
+  $("spIni").textContent=fmtF(CFG.ini); $("spFin").textContent=fmtF(CFG.fin);
+  const ha=(CFG.zona[2]-CFG.zona[0])*111.32*Math.cos(centro[1]*Math.PI/180)*(CFG.zona[3]-CFG.zona[1])*111.32*100; $("spHa").textContent=`${fmt(ha)} hectáreas del norte santafesino`; }
+$("bAj").onclick=()=>{llenarAjustes();$("ajustes").classList.toggle("on");};
+$("aOk").onclick=()=>{ const zona=$("aZ").value.split(",").map(Number); const zc=zona.length===4&&zona.every(isFinite)&&zona.join()!==CFG.zona.join();
+  Object.assign(CFG,{srv:$("aSrv").value.trim(),ini:$("aIni").value,fin:$("aFin").value,U:+$("aU").value,N:+$("aN").value}); if(zona.length===4&&zona.every(isFinite)) CFG.zona=zona;
+  ["srv","ini","fin","U","N"].forEach(k=>LS(k,String(CFG[k]))); LS("zona",CFG.zona.join(",")); for(const k in TPL) delete TPL[k];
+  $("ajustes").classList.remove("on"); if(zc){ location.reload(); return; } if(A){ analizar(); pintarParcelas(); cuadro(K); } llenarAjustes(); };
+$("bMedir").onclick=medirZona;
+
+/* ---------- arranque ---------- */
+llenarAjustes();
+if(CAMPO){ document.body.className="campo"; $("splash").style.display="none"; mapR.jumpTo({center:centro,zoom:8.4,pitch:0}); }
+if(PRUEBA){ $("prueba").style.display="block"; }
+</script>
+<script type="text/napa">
+/* ======== modo ?prueba: servidor simulado para ensayar sin red. NUNCA se usa en la demo real. ======== */
+if(/[?&]prueba\b/.test(location.search)){
+  const real=window.fetch.bind(window);
+  const fechasP=[]; for(let t=Date.parse(CFG.ini);t<=Date.parse(CFG.fin);t+=6*864e5) fechasP.push(new Date(t).toISOString().slice(0,10));
+  const agua=(lon,lat,f)=>{ const d=(Date.parse(f)-Date.parse("2026-03-20"))/864e5, nivel=Math.max(0,Math.sin(Math.min(Math.PI,d/72*Math.PI)))*1.0;
+    const cauce=Math.abs((lon+60.45)+0.25*Math.sin(lat*9))*6, bajo=Math.hypot(lon+60.6,(lat+29.25)*1.3)*2.2;
+    const h=Math.min(cauce,bajo)+0.35*Math.sin(lon*37)*Math.cos(lat*41); return h<nivel*1.25?(h>nivel*.95?3:2):1; };
+  window.fetch=async(u,o)=>{ u=String(u);
+    if(u.includes("collections.umm_json")) return new Response(JSON.stringify({items:[{meta:{"concept-id":"C2949811996-POCLOUD"}}]}));
+    if(u.includes("granules.umm_json")){ const p=+new URL(u).searchParams.get("page_num"); if(p>1) return new Response('{"items":[]}');
+      return new Response(JSON.stringify({items:fechasP.map((f,i)=>({umm:{GranuleUR:`OPERA_L3_DSWx-S1_T20JML_${f.replace(/-/g,"")}T092000Z_PRUEBA_${i}`,TemporalExtent:{RangeDateTime:{BeginningDateTime:f+"T09:20:00Z"}},SpatialExtent:{HorizontalSpatialDomain:{Geometry:{BoundingRectangles:[{WestBoundingCoordinate:-62,SouthBoundingCoordinate:-31,EastBoundingCoordinate:-59,NorthBoundingCoordinate:-28}]}}}}}))})); }
+    if(u.includes("tilejson.json")){ const q=new URL(u).searchParams; return new Response(JSON.stringify({tiles:["https://simulado/tiles/{z}/{x}/{y}.png?t="+q.get("temporal").slice(0,10)],minzoom:0})); }
+    if(u.startsWith("https://simulado/")){ const m=u.match(/tiles\/(\d+)\/(\d+)\/(\d+)\.png\?t=(.+)$/), z=+m[1],x=+m[2],y=+m[3],f=m[4];
+      const i=fechasP.indexOf(f), c=new OffscreenCanvas(256,256), ctx=c.getContext("2d"), im=ctx.createImageData(256,256);
+      for(let r=0;r<256;r++){ const lat=t2lat(y+(r+.5)/256,z); for(let k=0;k<256;k++){ const lon=t2lon(x+(k+.5)/256,z);
+        if(i%2===0 ? lon>-60.35 : lon<-60.55) continue; const v=agua(lon,lat,f), p=(r*256+k)*4; const col=v===1?[255,255,255]:v===2?[0,0,255]:[255,0,255]; im.data.set([...col,255],p); } }
+      ctx.putImageData(im,0,0); return new Response(await c.convertToBlob({type:"image/png"}),{headers:{"Content-Type":"image/png"}}); }
+    return real(u,o); };
+}
+</script>
+<script>
+/* Carga MapLibre desde unpkg y, si falla, desde jsDelivr; después arranca la app. */
+(function(){
+  var URLS=["https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl","https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl"];
+  function arrancar(){ var s=document.createElement("script"); s.textContent=[].map.call(document.querySelectorAll('script[type="text/napa"]'),function(x){return x.textContent;}).join("\n;\n"); document.body.appendChild(s); }
+  function fallo(){ document.body.innerHTML='<div style="font:16px/1.5 system-ui;color:#eee;background:#081018;position:fixed;inset:0;display:grid;place-items:center;padding:24px;text-align:center"><div><b style="font-size:20px">No se pudo cargar la librería de mapas.</b><br>Abrí este archivo con Chrome o Edge en una computadora con internet (no desde la vista previa del celular ni del chat).</div></div>'; }
+  function probar(i){
+    if(window.maplibregl) return arrancar();
+    if(i>=URLS.length) return fallo();
+    var l=document.createElement("link"); l.rel="stylesheet"; l.href=URLS[i]+".css"; document.head.appendChild(l);
+    var s=document.createElement("script"); s.src=URLS[i]+".js"; s.onload=function(){ probar(window.maplibregl?i:i+1); }; s.onerror=function(){ probar(i+1); }; document.head.appendChild(s);
+  }
+  probar(0);
+})();
+</script>
+</body>
+</html>
