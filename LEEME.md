@@ -40,6 +40,18 @@ Es el producto para vender. En el acto 2 se dibuja un lote (clic en cada esquina
 
 Tarda entre 30 segundos y 2 minutos por lote (los lotes vecinos comparten datos y van más rápido). Los KMZ hay que pasarlos a KML (Google Earth: guardar como KML).
 
+## Alertas por WhatsApp
+
+En la cartera, **Novedades de la última pasada** lista los lotes que en la última pasada de radar tienen bastante más agua que lo normal para ese lote (mediana de sus pasadas anteriores). Alerta alta: el límite inferior del intervalo supera el umbral y la suba es de 20 puntos o más. Media: 15% o más del lote con agua y una suba de 10 puntos o más.
+
+Cada alerta tiene **Abrir WhatsApp** (abre el chat con el mensaje escrito; si el KML o GeoJSON trae `telefono`, `tel`, `whatsapp` o `celular`, va directo al socio). Para mandar sin tocar nada, con Green API:
+
+1. En el VPS: `GREEN_ID=tu_id GREEN_TOKEN=tu_token ALERTA_CLAVE=una-clave-larga node proxy.js` (si la instancia usa otro host: `GREEN_URL=https://7103.api.greenapi.com`).
+2. En la página, **Ajustes**: proxy del VPS, la misma clave y el WhatsApp del centro primario (549 + característica + número, sin 0 ni 15).
+3. Aparecen **Enviar ahora** en cada alerta y **Enviar el resumen al centro primario**.
+
+El token de Green API queda solo en el VPS: la página nunca lo ve. Si la página está publicada con HTTPS, el proxy también tiene que estar detrás de HTTPS.
+
 ## Demo de presentación (index.html (presentación))
 
 Tres actos, se cambian con las teclas 1, 2 y 3 (barra espaciadora: reproducir).

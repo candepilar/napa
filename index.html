@@ -98,6 +98,9 @@ table.cart tr.clic{cursor:pointer}table.cart tr.clic:hover td{background:#f0eee7
 .modos{display:flex;gap:6px;flex-wrap:wrap}.modos button{font:500 12px Inter;border:1px solid #d6d3ca;background:#fff;border-radius:99px;padding:5px 11px;cursor:pointer}.modos button.on{background:#16324f;color:#fff;border-color:#16324f}
 details.opo{border-left:3px solid;background:#fff;border-radius:6px;padding:8px 11px;margin:6px 0;font-size:13px}details.opo summary{cursor:pointer;display:flex;justify-content:space-between;gap:8px;list-style:none}details.opo summary span{color:#555c63;white-space:nowrap}
 details.opo p{margin:6px 0;color:#2b3036;line-height:1.45}details.opo ul{margin:0;padding-left:16px;color:#2868d6}details.opo li{cursor:pointer;padding:2px 0}
+.alerta{display:flex;justify-content:space-between;gap:10px;align-items:center;border-radius:8px;padding:9px 11px;margin:6px 0;background:#fff;border-left:4px solid #e8a33b}.alerta.alta{border-left-color:#c8372d;background:#fdf1f0}
+.alerta b{display:block;font:600 14px var(--disp)}.alerta small{color:#555c63;font-size:12px}.al-b{display:flex;gap:6px;flex:none}.al-b button{font:500 12px Inter;border:1px solid #d6d3ca;background:#fff;border-radius:6px;padding:6px 9px;cursor:pointer}
+a.wa{display:inline-block;font:600 12px Inter;background:#1f8f4e;color:#fff!important;text-decoration:none;border-radius:6px;padding:7px 10px;white-space:nowrap}button.wa{border:0;cursor:pointer}a.wa.sec2{background:#fff;color:#1f8f4e!important;border:1px solid #1f8f4e}a.wa.ancho,button.wa.ancho{display:block;width:100%;text-align:center;margin-top:8px;font-size:13px;padding:9px}
 /* celular */
 body.campo header nav,body.campo .titulo,body.campo .barra,body.campo .lado,body.campo #swipe,body.campo .lado2,body.campo .tot,body.campo .cierre{display:none!important}
 .movil{display:none}body.campo .movil{display:block;position:absolute;left:0;right:0;top:56px;z-index:12;padding:10px 16px;background:linear-gradient(#081018ee,#08101800)}
@@ -168,6 +171,8 @@ body.campo header nav,body.campo .titulo,body.campo .barra,body.campo .lado,body
   <div class="dos"><div><label>Desde</label><input id="aIni" type="date"></div><div><label>Hasta</label><input id="aFin" type="date"></div></div>
   <div class="dos"><div><label>Agua en la parcela (%)</label><input id="aU" type="number" min="1" max="100"></div><div><label>Días mínimos</label><input id="aN" type="number" min="1"></div></div>
   <label>Zona (oeste, sur, este, norte)</label><input id="aZ" type="text">
+  <label>Alertas WhatsApp: proxy del VPS con Green API</label><input id="aAl" type="text" placeholder="https://tu-vps:8787">
+  <div class="dos"><div><label>Clave de alertas</label><input id="aCl" type="password"></div><div><label>WhatsApp del centro</label><input id="aTc" type="text" placeholder="5493411234567"></div></div>
   <div style="display:flex;gap:8px;margin-top:12px"><button class="ico" id="aOk">Aplicar</button><button class="ico" id="aGuardar">Guardar mediciones</button></div>
 </div>
 
@@ -199,6 +204,7 @@ const CFG = {
   srv: LS("srv") || "https://titiler-cmr.opengeos.org",
   ini: LS("ini") || "2026-03-20", fin: LS("fin") || "2026-05-31",
   U: +(LS("U") || 30), N: +(LS("N") || 10),
+  alSrv: LS("alSrv") || "", clave: LS("clave") || "", telCentro: LS("telCentro") || "",
   zona: (LS("zona") || "-60.95,-29.75,-59.95,-28.85").split(",").map(Number)
 };
 const SN = "OPERA_L3_DSWX-S1_V1", ASSET = "B01_WTR", REGEX = "B[0-9]{2}_[A-Z]+";
@@ -467,15 +473,16 @@ function mostrarLote(R){ ULT=R; mapR.getSource("caja").setData({type:"Feature",g
   try{ mapR.setLayoutProperty("nisar","visibility","none"); }catch(e){}
   R.capa.cv.toBlob((b)=>{ if(ULT!==R) return; mapR.getSource("frec").updateImage({url:URL.createObjectURL(b),coordinates:R.capa.coords}); mapR.setLayoutProperty("frec","visibility","visible"); });
   verInforme(R); }
+let TEL=null;
 async function informe(anillo, nombre){
-  const id={}; INF=id; const ring=cerrarAnillo(anillo);
+  const id={}; INF=id; const tel=TEL; TEL=null; const ring=cerrarAnillo(anillo);
   const xs=ring.map(p=>p[0]), ys=ring.map(p=>p[1]), bb=[Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)];
   const ha=areaHa(ring), cen=[(bb[0]+bb[2])/2,(bb[1]+bb[3])/2];
   mapR.getSource("caja").setData({type:"Feature",geometry:{type:"Polygon",coordinates:[ring]}});
   try{ mapR.setLayoutProperty("frec","visibility","none"); mapR.setLayoutProperty("nisar","visibility","none"); }catch(e){}
   panel(`<div class="ce-k">Informe hídrico del lote · Napa</div><div class="ce-h">${esc(nombre)}</div><div class="ce-s">${fmt(ha)} ha · ${cen[1].toFixed(4)}, ${cen[0].toFixed(4)}</div><div class="carga" id="ceC">Buscando en el catálogo de la NASA todas las pasadas de radar sobre el lote…</div><div class="prog cl"><i id="ceB"></i></div>`);
   const prog=(f,t)=>{ if(INF!==id) return; const c=$("ceC"), b=$("ceB"); if(c) c.textContent=t; if(b) b.style.width=Math.round(f*100)+"%"; };
-  try{ const R=await medirLote(anillo,nombre,prog,()=>INF===id); if(R&&INF===id) mostrarLote(R); }
+  try{ const R=await medirLote(anillo,nombre,prog,()=>INF===id); if(R&&INF===id){ R.tel=tel; mostrarLote(R); } }
   catch(e){ console.error(e); if(INF!==id) return; const c=$("ceC"); if(c){ c.className="ce-s"; c.textContent="No se pudo medir: "+e.message; } }
 }
 
@@ -506,14 +513,34 @@ const recosDe=(r)=>r&&!r.error?RECOS.filter(x=>x.cuando(r)):[];
 function seccionRecos(r){ const rs=recosDe(r); if(!rs.length) return "";
   return `<div class="sec">Qué ofrecerle a este socio</div>${rs.map(x=>`<div class="reco2" style="border-color:${x.col}"><b>${x.nom}</b><small>${x.por(r)} · ${fmt(x.ha(r))} ha</small><p>${x.que}</p></div>`).join("")}
    <p class="ce-s" style="font-size:11px">Reglas orientativas basadas solo en el comportamiento del lote frente al agua. Las debe validar el equipo de agronomía antes de ofrecerlas.</p>`; }
+
+/* ---------- alertas: cambio en la última pasada frente a lo normal del lote ---------- */
+const mediana=(a)=>{ if(!a.length) return null; const b=a.slice().sort((x,y)=>x-y), m=b.length>>1; return b.length%2?b[m]:(b[m-1]+b[m])/2; };
+function alertaDe(obs){ if(!obs||obs.length<4) return null; const u=obs[obs.length-1], normal=mediana(obs.slice(0,-1).map(o=>o.pct)), anom=u.pct-normal;
+  const nivel = (u.lo>=CFG.U && anom>=20) ? "alta" : (u.pct>=15 && anom>=10) ? "media" : null;
+  return {fecha:u.fecha,pct:u.pct,lo:u.lo,hi:u.hi,normal:Math.round(normal),anom:Math.round(anom),nivel,dias:Math.round(DIA(hoyISO())-DIA(u.fecha))}; }
+const telLimpio=(t)=>String(t||"").replace(/[^0-9]/g,"");
+function textoAlerta(r){ const a=r.alerta, rc=recosDe(r).filter(x=>x.k!=="alto")[0];
+  return `*Napa · Alerta de agua*\nLote: ${r.nombre} (${fmt(r.ha)} ha)\nRadar del ${fmtF(a.fecha)}: ${a.pct}% del lote con agua (entre ${a.lo} y ${a.hi}%).\nLo normal para este lote: ${a.normal}%.\n${rc?`Sugerencia: ${rc.nom.toLowerCase()}.\n`:""}Fuente: radar Sentinel-1, NASA OPERA DSWx-S1.\n${location.href.split("#")[0].split("?")[0]}`; }
+const MSJ=[]; const regMsj=(texto,tel)=>MSJ.push({texto,tel})-1;
+const puedeEnviar=(tel)=>CFG.alSrv&&CFG.clave&&telLimpio(tel).length>=8;
+function botonEnviar(texto,tel){ return puedeEnviar(tel)?`<button class="wa" onclick="enviarWA(this,${regMsj(texto,tel)})">Enviar ahora</button>`:""; }
+async function enviarWA(b,i){ const m=MSJ[i]; if(!m) return; b.disabled=true; b.textContent="Enviando…";
+  try{ const r=await fetch(CFG.alSrv.replace(/\/+$/,"")+"/alerta",{method:"POST",headers:{"Content-Type":"application/json","X-Clave":CFG.clave},body:JSON.stringify({telefono:m.tel,mensaje:m.texto})});
+    const j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.error||("error "+r.status)); b.textContent="Enviado ✓"; }
+  catch(e){ console.error(e); b.disabled=false; b.textContent="Reintentar"; aviso("No se pudo enviar: "+e.message,5000); } }
+function linkWA(texto,tel){ return `https://wa.me/${telLimpio(tel)}?text=${encodeURIComponent(texto)}`; }
+function tarjetaAlerta(r,i){ const a=r.alerta;
+  return `<div class="alerta ${a.nivel}"><div><b>${esc(r.nombre)}</b><small>${a.pct}% con agua el ${fmtC(a.fecha)} · lo normal es ${a.normal}% · hace ${a.dias} día${a.dias===1?"":"s"}</small></div>
+    <div class="al-b">${i!=null?`<button onclick="abrirDeCartera(${i})">Ver</button>`:""}${botonEnviar(textoAlerta(r),r.tel)}<a class="wa${puedeEnviar(r.tel)?" sec2":""}" href="${linkWA(textoAlerta(r),r.tel)}" target="_blank" rel="noopener">${puedeEnviar(r.tel)?"Abrir WhatsApp":"Avisar por WhatsApp"}</a></div></div>`; }
 /* ---------- cartera: todos los lotes de un archivo ---------- */
 let CART=null;
-function resumen(R){ const ev=R.obs.filter(o=>o.fecha>=CFG.ini&&o.fecha<=CFG.fin), e=estado(ev), d=ev.length>1?duracion(ev):{min:0,max:0}, bajos=R.sup.p+R.sup.f;
-  return {nombre:R.nombre,ha:R.ha,bajos,permanente:R.sup.p,haCub:R.haCub,pctB:R.haCub?bajos/R.haCub:-1,cub:R.haLote?R.haCub/R.haLote:0,e,dmin:d.min,dmax:d.max,pasadas:R.obs.length}; }
+function resumen(R){ const tel=R.tel, alerta=alertaDe(R.obs); const ev=R.obs.filter(o=>o.fecha>=CFG.ini&&o.fecha<=CFG.fin), e=estado(ev), d=ev.length>1?duracion(ev):{min:0,max:0}, bajos=R.sup.p+R.sup.f;
+  return {tel,alerta,nombre:R.nombre,ha:R.ha,bajos,permanente:R.sup.p,haCub:R.haCub,pctB:R.haCub?bajos/R.haCub:-1,cub:R.haLote?R.haCub/R.haLote:0,e,dmin:d.min,dmax:d.max,pasadas:R.obs.length}; }
 const colBajos=(p)=>p>=.3?"#143478":p>=.1?"#2868d6":p>=.03?"#80b2f8":"#e4dfd3";
 const COLE={r:"#c8372d",a:"#b07408",g:"#2f7d4f",x:"#868c92"};
-let MODO="bajos";
-function colorLote(r){ if(!r||r.error) return "#00000000"; if(MODO==="evento") return COLE[r.e]; if(MODO==="reco"){ const x=recosDe(r)[0]; return x?x.col:"#00000000"; } return r.pctB>=0?colBajos(r.pctB):"#00000000"; }
+let MODO="alertas";
+function colorLote(r){ if(!r||r.error) return "#00000000"; if(MODO==="evento") return COLE[r.e]; if(MODO==="alertas") return r.alerta&&r.alerta.nivel==="alta"?"#c8372d":r.alerta&&r.alerta.nivel==="media"?"#e8a33b":"#9aa3ab"; if(MODO==="reco"){ const x=recosDe(r)[0]; return x?x.col:"#00000000"; } return r.pctB>=0?colBajos(r.pctB):"#00000000"; }
 function modoMapa(m){ MODO=m; pintarLotes(); verCartera(); }
 function pintarLotes(){ mapR.getSource("lotes").setData({type:"FeatureCollection",features:LOTES.map((L,i)=>{ const r=CART&&CART.res[i];
   return {type:"Feature",properties:{c:colorLote(r)},geometry:{type:"Polygon",coordinates:[cerrarAnillo(L.ring)]}}; })}); }
@@ -523,7 +550,7 @@ async function medirTodos(){
   mapR.getSource("caja").setData(vacioFC); pintarLotes(); verCartera();
   for(let i=0;i<LOTES.length;i++){ if(INF!==id) return; const L=LOTES[i];
     const prog=(f,t)=>{ if(INF!==id) return; const c=$("ceC"), b=$("ceB"); if(c) c.textContent=`Lote ${i+1} de ${LOTES.length} · ${L.nombre}: ${t}`; if(b) b.style.width=Math.round((i+f)/LOTES.length*100)+"%"; };
-    try{ const R=await medirLote(L.ring,L.nombre,prog,()=>INF===id); if(!R) return; CART.R[i]=R; CART.res[i]=resumen(R); }
+    try{ const R=await medirLote(L.ring,L.nombre,prog,()=>INF===id); if(!R) return; R.tel=L.tel; CART.R[i]=R; CART.res[i]=resumen(R); }
     catch(e){ console.warn(L.nombre,e); CART.res[i]={nombre:L.nombre,ha:areaHa(cerrarAnillo(L.ring)),error:e.message}; }
     if(INF!==id) return; pintarLotes(); verCartera(); }
   CART.hecho=true; verCartera();
@@ -536,7 +563,13 @@ function verCartera(){ if(!CART) return; const ok=CART.res.map((r,i)=>[r,i]).fil
    ${CART.hecho?"":`<div class="carga" id="ceC">Midiendo…</div><div class="prog cl"><i id="ceB" style="width:${Math.round(n/LOTES.length*100)}%"></i></div>`}
    ${ok.length?`<div class="ce-kp" style="margin-top:14px"><div><small>Bajos que se anegan con frecuencia</small><b>${fmt(haB)} ha</b><small>${haT?Math.round(haB/haT*100):0}% de ${fmt(haT)} ha con historia suficiente</small></div>
      <div><small>Anegamiento prolongado en el evento</small><b>${fmt(haC)} ha</b><small>${conf.length} lotes confirmados · ${pos.length} posibles</small></div></div>`:""}
-   ${ok.length?`<div class="sec">Mapa</div><div class="modos">${[["bajos","Bajos"],["evento","Evento"],["reco","Oportunidad principal"]].map(([k,t])=>`<button class="${MODO===k?"on":""}" onclick="modoMapa('${k}')">${t}</button>`).join("")}</div>
+   ${(()=>{ if(!ok.length) return ""; const al=ok.filter(([r])=>r.alerta&&r.alerta.nivel).sort((p,q)=>q[0].alerta.anom-p[0].alerta.anom);
+     const ult=ok.map(([r])=>r.alerta&&r.alerta.fecha).filter(Boolean).sort().pop();
+     if(!al.length) return `<div class="sec">Novedades de la última pasada</div><p class="ce-s">Ningún lote tiene más agua que lo normal${ult?` en la última pasada (${fmtF(ult)})`:""}.</p>`;
+     const resumenWA=`*Napa · Novedades de agua*\n${al.length} lote${al.length>1?"s":""} con más agua que lo normal en la última pasada de radar:\n`+al.map(([r])=>`• ${r.nombre}: ${r.alerta.pct}% (normal ${r.alerta.normal}%)`).join("\n")+`\n${location.href.split("#")[0].split("?")[0]}`;
+     return `<div class="sec">Novedades de la última pasada</div><p class="ce-s">${al.length} lote${al.length>1?"s tienen":" tiene"} bastante más agua que lo normal para ese lote. Ordenados por cuánto cambió.</p>${al.map(([r,i])=>tarjetaAlerta(r,i)).join("")}
+       ${puedeEnviar(CFG.telCentro)?`<button class="wa ancho" onclick="enviarWA(this,${regMsj(resumenWA,CFG.telCentro)})">Enviar el resumen al centro primario (${esc(CFG.telCentro)})</button>`:`<a class="wa ancho" href="${linkWA(resumenWA,CFG.telCentro)}" target="_blank" rel="noopener">Mandar el resumen al centro primario por WhatsApp</a>`}`; })()}
+   ${ok.length?`<div class="sec">Mapa</div><div class="modos">${[["alertas","Novedades"],["bajos","Bajos"],["evento","Evento"],["reco","Oportunidad principal"]].map(([k,t])=>`<button class="${MODO===k?"on":""}" onclick="modoMapa('${k}')">${t}</button>`).join("")}</div>
    <div class="sec">Oportunidades comerciales</div>
    ${RECOS.map(rc=>{ const ls=ok.filter(([r])=>rc.cuando(r)); if(!ls.length) return ""; const h=ls.reduce((a,[r])=>a+rc.ha(r),0);
      return `<details class="opo" style="border-color:${rc.col}"><summary><b>${rc.nom}</b><span>${ls.length} lote${ls.length>1?"s":""} · ${fmt(h)} ha</span></summary><p>${rc.que}</p><ul>${ls.map(([r,i])=>`<li onclick="abrirDeCartera(${i})">${esc(r.nombre)} · ${fmt(rc.ha(r))} ha</li>`).join("")}</ul></details>`; }).join("")}
@@ -585,6 +618,7 @@ function verInforme(I){
   const deCart=CART&&CART.R.includes(I);
   panel(`${deCart?`<button class="volver" onclick="volverCartera()">← Volver a la cartera</button>`:""}<div class="ce-k">Informe hídrico del lote · Napa</div><div class="ce-h">${esc(I.nombre)}</div>
    <div class="ce-s">${fmt(ha)} ha · ${n} pasadas de radar válidas entre ${fmtF(uno?uno.fecha:HIST_INI)} y ${fmtF(ult?ult.fecha:fin)}</div>
+   ${(()=>{ const r=resumen(I); return r.alerta&&r.alerta.nivel?`<div class="sec">Novedad de la última pasada</div>${tarjetaAlerta(r,null)}`:""; })()}
    <div class="sec">Ambientes hídricos</div>
    <div class="barra-amb">${AMB.map(a=>sup[a.k]?`<i style="flex:${sup[a.k]};background:${a.css}"></i>`:"").join("")}</div>
    <table class="amb">${AMB.map(a=>`<tr><td><i style="background:${a.css}"></i>${a.nom}<small>${a.det}</small></td><td>${fmt(sup[a.k])} ha</td><td>${pct(sup[a.k])}%</td></tr>`).join("")}</table>
@@ -641,15 +675,17 @@ function terminarDibujo(){ const p=[]; DIB.pts.forEach(q=>{ const u=p[p.length-1
 function lotesDeArchivo(txt){ const out=[];
   if(/^\s*</.test(txt)){ const x=new DOMParser().parseFromString(txt,"text/xml");
     x.querySelectorAll("Placemark").forEach((pm)=>{ const nm=pm.querySelector("name"); pm.querySelectorAll("Polygon").forEach((pg)=>{ const c=pg.querySelector("outerBoundaryIs coordinates")||pg.querySelector("coordinates"); if(!c) return;
-      const ring=c.textContent.trim().split(/\s+/).map(t=>t.split(",").slice(0,2).map(Number)).filter(q=>q.length===2&&q.every(isFinite)); if(ring.length>=3) out.push({nombre:(nm&&nm.textContent.trim())||`Lote ${out.length+1}`,ring}); }); }); }
+      const ring=c.textContent.trim().split(/\s+/).map(t=>t.split(",").slice(0,2).map(Number)).filter(q=>q.length===2&&q.every(isFinite));
+      const dt=[...pm.querySelectorAll("Data, SimpleData")].find(d=>/^(tel|telefono|teléfono|whatsapp|celular)$/i.test(d.getAttribute("name")||"")); const tel=dt?(dt.querySelector("value")||dt).textContent.trim():"";
+      if(ring.length>=3) out.push({nombre:(nm&&nm.textContent.trim())||`Lote ${out.length+1}`,ring,tel}); }); }); }
   else { const j=JSON.parse(txt), fs=j.type==="FeatureCollection"?j.features:j.type==="Feature"?[j]:[{geometry:j,properties:{}}];
     fs.forEach((f)=>{ const g=f.geometry||{}, pr=f.properties||{}, ps=g.type==="Polygon"?[g.coordinates]:g.type==="MultiPolygon"?g.coordinates:[];
-      ps.forEach((pc)=>{ if(pc&&pc[0]&&pc[0].length>=3) out.push({nombre:String(pr.nombre||pr.name||pr.Name||pr.lote||pr.id||`Lote ${out.length+1}`),ring:pc[0].map(c=>[+c[0],+c[1]])}); }); }); }
+      ps.forEach((pc)=>{ if(pc&&pc[0]&&pc[0].length>=3) out.push({nombre:String(pr.nombre||pr.name||pr.Name||pr.lote||pr.id||`Lote ${out.length+1}`),ring:pc[0].map(c=>[+c[0],+c[1]]),tel:String(pr.telefono||pr.tel||pr.whatsapp||pr.celular||"")}); }); }); }
   return out; }
 let LOTES=[];
 function irALote(i){ const L=LOTES[i]; if(!L) return; document.querySelectorAll("#lotesArch button.lb").forEach((b,k)=>b.classList.toggle("on",k===i));
   const xs=L.ring.map(p=>p[0]), ys=L.ring.map(p=>p[1]); mapR.fitBounds([[Math.min(...xs),Math.min(...ys)],[Math.max(...xs),Math.max(...ys)]],{padding:(()=>{const h=Math.min(440,innerWidth*.28);return {top:110,bottom:110,left:h,right:h};})(),maxZoom:15,duration:800});
-  informe(L.ring,L.nombre); }
+  TEL=L.tel; informe(L.ring,L.nombre); }
 $("bDib").onclick=()=>DIB?cancelarDibujo():empezarDibujo();
 $("bArch").onchange=async(e)=>{ const f=e.target.files[0]; e.target.value=""; if(!f) return;
   if(/\.kmz$/i.test(f.name)){ aviso("Los KMZ vienen comprimidos: abrilo en Google Earth y guardalo como KML",4000); return; }
@@ -697,13 +733,13 @@ async function listo(){ await mapaListo; analizar(); $("splash").style.display="
   mapR.fitBounds([[CFG.zona[0],CFG.zona[1]],[CFG.zona[2],CFG.zona[3]]],{padding:{top:120,bottom:200,left:40,right:40},pitch:0,duration:0}); }
 
 /* ---------- ajustes ---------- */
-function llenarAjustes(){ $("aSrv").value=CFG.srv;$("aIni").value=CFG.ini;$("aFin").value=CFG.fin;$("aU").value=CFG.U;$("aN").value=CFG.N;$("aZ").value=CFG.zona.join(",");
+function llenarAjustes(){ $("aSrv").value=CFG.srv;$("aIni").value=CFG.ini;$("aFin").value=CFG.fin;$("aU").value=CFG.U;$("aN").value=CFG.N;$("aZ").value=CFG.zona.join(",");$("aAl").value=CFG.alSrv;$("aCl").value=CFG.clave;$("aTc").value=CFG.telCentro;
   $("spIni").textContent=fmtF(CFG.ini); $("spFin").textContent=fmtF(CFG.fin);
   const ha=(CFG.zona[2]-CFG.zona[0])*111.32*Math.cos(centro[1]*Math.PI/180)*(CFG.zona[3]-CFG.zona[1])*111.32*100; $("spHa").textContent=`${fmt(ha)} hectáreas del norte santafesino`; }
 $("bAj").onclick=()=>{llenarAjustes();$("ajustes").classList.toggle("on");};
 $("aOk").onclick=()=>{ const zona=$("aZ").value.split(",").map(Number); const zc=zona.length===4&&zona.every(isFinite)&&zona.join()!==CFG.zona.join();
-  Object.assign(CFG,{srv:$("aSrv").value.trim(),ini:$("aIni").value,fin:$("aFin").value,U:+$("aU").value,N:+$("aN").value}); if(zona.length===4&&zona.every(isFinite)) CFG.zona=zona;
-  ["srv","ini","fin","U","N"].forEach(k=>LS(k,String(CFG[k]))); LS("zona",CFG.zona.join(",")); for(const k in TPL) delete TPL[k];
+  Object.assign(CFG,{alSrv:$("aAl").value.trim(),clave:$("aCl").value,telCentro:$("aTc").value.trim(),srv:$("aSrv").value.trim(),ini:$("aIni").value,fin:$("aFin").value,U:+$("aU").value,N:+$("aN").value}); if(zona.length===4&&zona.every(isFinite)) CFG.zona=zona;
+  ["srv","ini","fin","U","N","alSrv","clave","telCentro"].forEach(k=>LS(k,String(CFG[k]))); LS("zona",CFG.zona.join(",")); for(const k in TPL) delete TPL[k];
   $("ajustes").classList.remove("on"); if(zc){ location.reload(); return; } if(A){ analizar(); pintarParcelas(); cuadro(K); } llenarAjustes(); };
 $("bMedir").onclick=medirZona;
 
