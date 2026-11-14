@@ -50,7 +50,9 @@ Cada alerta tiene **Abrir WhatsApp** (abre el chat con el mensaje escrito; si el
 2. En la página, **Ajustes**: proxy del VPS, la misma clave y el WhatsApp del centro primario (549 + característica + número, sin 0 ni 15).
 3. Aparecen **Enviar ahora** en cada alerta y **Enviar el resumen al centro primario**.
 
-El token de Green API queda solo en el VPS: la página nunca lo ve. Si la página está publicada con HTTPS, el proxy también tiene que estar detrás de HTTPS.
+Con la API oficial de Meta (WhatsApp Business Cloud API) en lugar de Green API: `WA_TOKEN=token WA_PHONE_ID=id_del_numero ALERTA_CLAVE=... node proxy.js`. Si está configurada, tiene prioridad. Meta solo deja mandar texto libre a quien escribió en las últimas 24 horas; para avisos que inicia la cooperativa hace falta una plantilla aprobada en el Business Manager, con un parámetro `{{1}}` en el cuerpo (por ejemplo: "Alerta de agua de Napa: {{1}}"), y sumar `WA_TEMPLATE=nombre WA_LANG=es_AR`. El proxy pasa el mensaje a una sola línea, porque Meta no acepta saltos de línea en los parámetros.
+
+Los tokens quedan solo en el VPS: la página nunca los ve. Si la página está publicada con HTTPS, el proxy también tiene que estar detrás de HTTPS.
 
 ## Demo de presentación (index.html (presentación))
 
