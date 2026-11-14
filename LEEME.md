@@ -27,6 +27,17 @@ Visor que mide el agua de cada lote con datos satelitales reales de la NASA, sin
 - Sentinel-2 cloudless de EOX es gratis para uso no comercial; para vender el producto hay que pagar la licencia o usar otro mapa base.
 - Los datos de la NASA (GIBS, CMR, OPERA, NISAR) son abiertos. AWS Terrain Tiles es abierto con atribución.
 
+## Informe hídrico por lote (acto 2)
+
+Es el producto para vender. En el acto 2 se dibuja un lote (clic en cada esquina, doble clic para cerrar), se sube un KML o GeoJSON del campo (se listan todos sus lotes) o se toca el mapa para medir 1 km². Napa pide a la NASA todas las pasadas de DSWx-S1 sobre el lote desde septiembre de 2024 y arma:
+
+- **Ambientes hídricos**: para cada píxel de unos 30 m, la fracción de pasadas válidas con agua. Clases: 50% o más (agua la mayor parte del tiempo), 20 a 50% (se anega con frecuencia), 5 a 20% (eventos fuertes), menos de 5% (sin anegamiento). Solo se clasifican píxeles con 10 o más pasadas válidas.
+- **Serie histórica**: % del lote con agua en cada pasada, con intervalo de 95% (binomial, efecto de diseño 3). Una pasada cuenta si cubre al menos la mitad del lote.
+- **Evento** (período de Ajustes): días bajo agua confirmados y posibles.
+- **Exportar**: serie (CSV), mapa por píxel (CSV con lon, lat, pasadas, frecuencia y ambiente, para QGIS o el software de prescripción), lote (GeoJSON) e impresión a PDF.
+
+Tarda entre 30 segundos y 2 minutos según el tamaño del lote. Los KMZ hay que pasarlos a KML (Google Earth: guardar como KML).
+
 ## Demo de presentación (index.html (presentación))
 
 Tres actos, se cambian con las teclas 1, 2 y 3 (barra espaciadora: reproducir).

@@ -75,6 +75,19 @@ body:not(.a1) .solo1,body:not(.a2) .solo2,body:not(.a3) .solo3{display:none!impo
 .clave.flot{position:absolute;left:24px;top:250px;z-index:11}
 .titulo.solo1 .clave{pointer-events:none}
 @media (max-width:760px){.clave{max-width:none;font-size:12px}.clave.flot{right:8px;left:8px;top:auto;bottom:8px}.lado2{display:none}}
+.herr{pointer-events:auto!important;max-height:calc(100vh - 290px);overflow:auto}
+.herr .btns{display:flex;gap:8px;flex-wrap:wrap}.herr .btns button,.herr .btns label{font:600 13px var(--disp);border:1px solid var(--line);background:var(--ink);color:var(--bg);border-radius:8px;padding:8px 12px;cursor:pointer}
+.herr .btns label{background:transparent;color:var(--ink)}
+#lotesArch{margin-top:8px;display:flex;flex-direction:column;gap:4px}#lotesArch small{color:var(--ink3)}#lotesArch button{text-align:left;font:13px Inter;background:#ffffff0a;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 8px;cursor:pointer}#lotesArch button.on{border-color:#ffd166}
+.prog.cl{background:#e2e0d9}.prog.cl i{background:#16324f}
+#cert .sec{font:600 11px var(--disp);letter-spacing:.1em;text-transform:uppercase;color:#16324f;margin:18px 0 8px;padding-top:12px;border-top:1px solid #e2e0d9}
+.barra-amb{display:flex;height:14px;border-radius:4px;overflow:hidden;background:#e4dfd3}
+table.amb{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}table.amb td{padding:5px 0;border-bottom:1px solid #ecebe5;vertical-align:top}table.amb td:nth-child(n+2){text-align:right;white-space:nowrap;padding-left:8px;font-variant-numeric:tabular-nums}
+table.amb i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:7px}table.amb small{display:block;color:#7a8088;font-size:11px;margin-left:17px}
+.reco{background:#eef3fb;border-left:3px solid #2868d6;border-radius:6px;padding:10px 12px;font-size:13px;line-height:1.45;margin-top:10px}
+svg.ser{width:100%;height:auto;display:block}svg.ser text{font:9px Inter;fill:#7a8088}
+.ce-ev{word-break:break-word}.ce-btn{flex-wrap:wrap}
+@media (max-height:880px){.lado2{display:none}}
 /* celular */
 body.campo header nav,body.campo .titulo,body.campo .barra,body.campo .lado,body.campo #swipe,body.campo .lado2,body.campo .tot,body.campo .cierre{display:none!important}
 .movil{display:none}body.campo .movil{display:block;position:absolute;left:0;right:0;top:56px;z-index:12;padding:10px 16px;background:linear-gradient(#081018ee,#08101800)}
@@ -88,8 +101,8 @@ body.campo header nav,body.campo .titulo,body.campo .barra,body.campo .lado,body
 <div id="swipe" class="solo1"><i>⇔</i></div>
 
 <header>
-  <div class="logo">NAPA<small>Días bajo agua de cada campo, con el radar de la NASA</small></div>
-  <nav><button data-a="1" class="on">1 · Lo que nadie vio</button><button data-a="2">2 · Tu campo</button><button data-a="3">3 · Todos los campos</button></nav>
+  <div class="logo">NAPA<small>Ambientes hídricos de cada lote, con el radar de la NASA</small></div>
+  <nav><button data-a="1" class="on">1 · Lo que nadie vio</button><button data-a="2">2 · Tu lote</button><button data-a="3">3 · Un evento</button></nav>
   <div class="sp"></div><button class="ico" id="bAj" aria-label="Ajustes">Ajustes</button>
 </header>
 
@@ -109,26 +122,31 @@ body.campo header nav,body.campo .titulo,body.campo .barra,body.campo .lado,body
   <div class="cont"><b id="cnt">0</b> <span>hectáreas bajo agua</span><small id="cntS">en toda la zona, ese día</small></div>
 </div>
 
-<div class="titulo solo2"><h1>2. Tocá un campo y sale su prueba.</h1><p>Napa mide ese campo (unas 100 hectáreas) cada vez que pasó el satélite y te dice cuántos días estuvo bajo agua. Esa constancia es la prueba para el seguro o para pedir la emergencia agropecuaria.</p></div>
-<div class="clave solo2 flot"><b>Cómo leer el mapa</b>
-<div><i class="sw" style="background:var(--agua)"></i><span><b>Azul:</b> agua que vio el radar.</span></div>
-<div><i class="sw" style="background:transparent;border:2px solid #fff"></i><span><b>Recuadro blanco:</b> el campo que tocaste (1 km², unas 100 ha).</span></div>
-<p>A la derecha aparece su constancia: cuántos días estuvo bajo agua y con qué archivos de la NASA se midió.</p></div>
-<div class="lado2 solo2"><div id="qr"></div><div><b>Probalo en tu celular</b><p id="qrT">Escaneá el código, tocá un punto del norte santafesino y recibí la constancia de ese campo.</p></div></div>
+<div class="titulo solo2"><h1>2. Cada lote, con su historia de agua.</h1><p>Napa revisa todas las pasadas del radar desde septiembre de 2024 y marca, cada 30 metros, qué partes del lote se anegan y con qué frecuencia.</p></div>
+<div class="clave solo2 flot herr"><b>Elegí el lote</b>
+<div class="btns"><button id="bDib">Dibujar lote</button><label>Subir KML o GeoJSON<input type="file" id="bArch" accept=".kml,.geojson,.json,.kmz" hidden></label></div>
+<p style="margin-top:6px!important">O tocá el mapa para medir 1 km² alrededor del punto. Medir dos años de radar tarda entre 30 segundos y 2 minutos.</p>
+<div id="lotesArch"></div>
+<b style="margin-top:12px">Cómo leer el mapa</b>
+<div><i class="sw" style="background:#143478"></i><span><b>Azul oscuro:</b> con agua la mayor parte del tiempo.</span></div>
+<div><i class="sw" style="background:#2868d6"></i><span><b>Azul:</b> se anega con frecuencia (20 a 50% de las pasadas).</span></div>
+<div><i class="sw" style="background:#80b2f8"></i><span><b>Celeste:</b> se anega solo en eventos fuertes.</span></div>
+<div><i class="sw" style="background:transparent;border:2px solid #fff"></i><span><b>Sin color:</b> no se detectó anegamiento.</span></div></div>
+<div class="lado2 solo2"><div id="qr"></div><div><b>Probalo en tu celular</b><p id="qrT">Escaneá el código, tocá un punto del norte santafesino y recibí el informe de ese campo.</p></div></div>
 
-<div class="titulo solo3"><h1>3. Toda la zona, sin un solo trámite.</h1><p id="t3s">Todos los campos de la zona, medidos de una vez.</p></div>
+<div class="titulo solo3"><h1>3. Un evento, toda la zona.</h1><p id="t3s">La inundación de otoño de 2026, lote por lote.</p></div>
 <div class="clave solo3 flot"><b>Cómo leer el mapa</b>
-<div><i class="sw" style="background:var(--red)"></i><span><b>Rojo:</b> más de <span class="uD">10</span> días bajo agua, confirmado. Calificaría para el seguro.</span></div>
+<div><i class="sw" style="background:var(--red)"></i><span><b>Rojo:</b> más de <span class="uD">10</span> días bajo agua, confirmado con 95% de confianza.</span></div>
 <div><i class="sw" style="background:var(--amb)"></i><span><b>Naranja:</b> dudoso. Hay que mandar a alguien a ver.</span></div>
 <div><i class="sw" style="background:var(--grn)"></i><span><b>Verde:</b> no se anegó tanto tiempo.</span></div>
-<p>Cada cuadrito es un campo. Tocá uno para ver su constancia.</p></div>
+<p>Tocá un cuadrito para ver su informe completo. Con el catastro, los cuadritos se reemplazan por los lotes reales.</p></div>
 <div class="tot solo3"><div class="n" id="t3n">—</div><div class="l" id="t3l">hectáreas que estuvieron más de 10 días bajo agua, confirmadas por radar</div>
   <div class="fila"><span><i style="background:var(--red)"></i>Más de <span class="uD">10</span> días bajo agua</span><b id="t3r">—</b></div>
   <div class="fila"><span><i style="background:var(--amb)"></i>Dudoso: hay que ir a ver</span><b id="t3a">—</b></div>
   <div class="fila"><span><i style="background:var(--grn)"></i>No se anegó tanto</span><b id="t3g">—</b></div></div>
-<div class="cierre solo3">De la declaración jurada<br>a la prueba satelital.</div>
+<div class="cierre solo3">Cada lote, medido.<br>Con nubes o sin ellas.</div>
 
-<div class="movil"><h1>Tocá tu campo</h1><p>Constancia de anegamiento con el radar de la NASA (marzo a mayo de 2026).</p><button id="miUbic">Usar mi ubicación</button></div>
+<div class="movil"><h1>Tocá tu campo</h1><p>Informe hídrico con el radar de la NASA, desde septiembre de 2024.</p><button id="miUbic">Usar mi ubicación</button></div>
 
 <div id="cert"></div>
 <div id="aviso"></div>
@@ -145,13 +163,13 @@ body.campo header nav,body.campo .titulo,body.campo .barra,body.campo .lado,body
 
 <div id="splash"><div class="c">
   <div class="tag">NASA Space Apps 2026 · Dancing with the SARs</div>
-  <h2>Napa mide cuántos días estuvo bajo agua cada campo, con el radar de la NASA.</h2>
+  <h2>Napa muestra qué partes de cada lote se anegan, y con qué frecuencia, con el radar de la NASA.</h2>
   <div class="tres">
-    <div><small>El problema</small>Para cobrar un seguro o pedir la emergencia agropecuaria, el productor tiene que probar que su campo se inundó. Hoy es una declaración jurada y una visita que tarda semanas.</div>
-    <div><small>Por qué el radar</small>Cuando llueve hay nubes, y las fotos satelitales comunes no ven nada. El radar de Sentinel-1 ve a través de las nubes, y la NASA (OPERA DSWx-S1) lo convierte en mapas de agua.</div>
-    <div><small>Lo que agrega Napa</small>Mide cada campo en cada pasada del satélite, cuenta los días bajo agua con un margen de error y entrega una constancia con los archivos de la NASA como prueba.</div>
+    <div><small>El problema</small>Los bajos de un lote se conocen por experiencia o con años de mapas de rinde. Sembrar y fertilizar igual en todo el lote es perder plata en las zonas que se inundan, y las imágenes comunes fallan justo cuando llueve, porque hay nubes.</div>
+    <div><small>El dato</small>El radar de Sentinel-1 atraviesa las nubes y pasa cada 6 a 12 días. La NASA (OPERA DSWx-S1) lo convierte en mapas de agua de 30 m. Desde septiembre de 2024 hay más de dos años de historia sobre cada lote.</div>
+    <div><small>Lo que hace Napa</small>Dibujás o subís el lote y en un par de minutos tenés su mapa de ambientes hídricos, la serie histórica con margen de error y los días bajo agua de cada evento, exportable a CSV y GeoJSON.</div>
   </div>
-  <p class="chico">Caso real: la inundación del norte de Santa Fe, entre el <b id="spIni"></b> y el <b id="spFin"></b>, sobre <b id="spHa"></b>. Medir tarda uno o dos minutos.</p>
+  <p class="chico">La presentación arranca con un caso real, la inundación del norte de Santa Fe, entre el <b id="spIni"></b> y el <b id="spFin"></b>, sobre <b id="spHa"></b>. Medir tarda uno o dos minutos.</p>
   <div class="b"><button class="pri" id="bMedir">Medir la inundación</button><label>Cargar mediciones guardadas<input type="file" id="bCargar" accept=".json" hidden></label></div>
   <div class="prog"><i id="progB"></i></div><div id="progT"></div>
 </div></div>
@@ -289,13 +307,18 @@ const mapL=new maplibregl.Map({container:"mapL",center:centro,zoom:8.6,pitch:0,a
 const mapR=new maplibregl.Map({container:"mapR",center:centro,zoom:8.6,pitch:0,attributionControl:{compact:true},
   style:estilo({s:{agua:{type:"image",url:VACIO,coordinates:zonaCoords()},hd:{type:"raster",tiles:["data:,"],tileSize:T,minzoom:8,maxzoom:14,attribution:"NASA OPERA DSWx-S1 vía titiler-cmr"},
     parc:{type:"image",url:VACIO,coordinates:zonaCoords()},caja:{type:"geojson",data:{type:"FeatureCollection",features:[]}},
+    frec:{type:"image",url:VACIO,coordinates:zonaCoords()},dib:{type:"geojson",data:{type:"FeatureCollection",features:[]}},lotes:{type:"geojson",data:{type:"FeatureCollection",features:[]}},
     zona:{type:"geojson",data:{type:"Feature",geometry:{type:"Polygon",coordinates:[[...zonaCoords(),zonaCoords()[0]]]}}}},
   l:[{id:"zona",type:"line",source:"zona",paint:{"line-color":"#ffffff","line-opacity":.35,"line-width":1,"line-dasharray":[3,3]}},
      {id:"agua",type:"raster",source:"agua",paint:{"raster-fade-duration":0,"raster-resampling":"nearest"}},
      {id:"hd",type:"raster",source:"hd",minzoom:11,layout:{visibility:"none"},paint:{"raster-fade-duration":150}},
      {id:"parc",type:"raster",source:"parc",layout:{visibility:"none"},paint:{"raster-fade-duration":0,"raster-resampling":"nearest","raster-opacity":.82}},
-     {id:"caja",type:"line",source:"caja",paint:{"line-color":"#ffffff","line-width":3}},
-     {id:"cajaF",type:"fill",source:"caja",paint:{"fill-color":"#ffffff","fill-opacity":.12}}]})});
+     {id:"frec",type:"raster",source:"frec",layout:{visibility:"none"},paint:{"raster-fade-duration":0,"raster-resampling":"nearest","raster-opacity":.92}},
+     {id:"lotes",type:"line",source:"lotes",paint:{"line-color":"#ffd166","line-width":1.5,"line-opacity":.8}},
+     {id:"caja",type:"line",source:"caja",paint:{"line-color":"#ffffff","line-width":2.5}},
+     {id:"dibL",type:"line",source:"dib",paint:{"line-color":"#ffd166","line-width":2,"line-dasharray":[2,1]}},
+     {id:"dibP",type:"circle",source:"dib",filter:["==","$type","Point"],paint:{"circle-radius":4,"circle-color":"#ffd166","circle-stroke-color":"#081018","circle-stroke-width":1.5}},
+     {id:"cajaF",type:"fill",source:"caja",paint:{"fill-color":"#ffffff","fill-opacity":.04}}]})});
 mapR.addControl(new maplibregl.NavigationControl({visualizePitch:true}),"top-right");
 let sincro=false; const copia=(a,b)=>()=>{ if(sincro) return; sincro=true; b.jumpTo({center:a.getCenter(),zoom:a.getZoom(),bearing:a.getBearing(),pitch:a.getPitch()}); sincro=false; };
 mapR.on("move",copia(mapR,mapL)); mapL.on("move",copia(mapL,mapR));
@@ -342,60 +365,191 @@ function pintarParcelas(){
   c.toBlob((b)=>mapR.getSource("parc").updateImage({url:URL.createObjectURL(b),coordinates:[[w,n],[e,n],[e,s],[w,s]]}));
   $("t3n").textContent=fmt(tot.haR); $("t3r").textContent=`${fmt(tot.r)} parcelas`; $("t3a").textContent=`${fmt(tot.a)} parcelas`; $("t3g").textContent=`${fmt(tot.g)} parcelas`;
   $("t3l").textContent=`hectáreas que estuvieron más de ${CFG.N} días bajo agua, confirmadas por radar`; document.querySelectorAll(".uD").forEach(e=>e.textContent=CFG.N);
-  $("t3s").textContent=`Todos los campos de la zona, medidos de una vez. Cada cuadrito es un campo de unas ${fmt(A.haParcela)} hectáreas.`;
+  $("t3s").textContent=`La inundación de otoño de 2026, campo por campo. Cada cuadrito tiene unas ${fmt(A.haParcela)} hectáreas.`;
 }
 
-/* ---------- constancia de un campo ---------- */
-async function constancia(lng,lat){
-  const dlat=LADO_KM/2/111.32, dlon=LADO_KM/2/(111.32*Math.cos(lat*Math.PI/180)), bb=[lng-dlon,lat-dlat,lng+dlon,lat+dlat];
-  mapR.getSource("caja").setData({type:"Feature",geometry:{type:"Polygon",coordinates:[[[bb[0],bb[1]],[bb[2],bb[1]],[bb[2],bb[3]],[bb[0],bb[3]],[bb[0],bb[1]]]]}});
-  const ce=$("cert"); ce.classList.add("on"); ce.innerHTML=`<button class="x" onclick="cerrarCert()" aria-label="Cerrar">×</button><div class="ce-k">Constancia satelital de anegamiento</div><div class="ce-h">Campo en ${lat.toFixed(4)}, ${lng.toFixed(4)}</div><div class="carga" id="ceC">Buscando las pasadas de radar sobre este campo…</div>`;
+/* ---------- informe hídrico de un lote ----------
+   Historia completa de NASA OPERA DSWx-S1 sobre el lote (desde septiembre de 2024).
+   Por píxel de ~30 m: pasadas válidas y pasadas con agua → frecuencia de anegamiento.
+   Por pasada: % del lote con agua, con intervalo de confianza. */
+const HIST_INI = "2024-09-01";      // inicio de DSWx-S1
+const MIN_OBS = 10;                 // pasadas válidas mínimas para clasificar un píxel
+const COBERTURA = 0.5;              // fracción del lote observada para contar la pasada como dato del lote
+const AMB = [
+  {k:"p", min:.50, nom:"Con agua la mayor parte del tiempo", det:"50% o más de las pasadas", col:[20,52,120,240], css:"#143478"},
+  {k:"f", min:.20, nom:"Se anega con frecuencia",          det:"20 a 50% de las pasadas", col:[40,104,214,230], css:"#2868d6"},
+  {k:"o", min:.05, nom:"Se anega en eventos fuertes",      det:"5 a 20% de las pasadas",  col:[128,178,248,215], css:"#80b2f8"},
+  {k:"s", min:0,   nom:"Sin anegamiento detectado",        det:"menos del 5%",            col:[0,0,0,0],         css:"#e4dfd3"}];
+const claseDe = (f)=>AMB.find(a=>f>=a.min);
+const hoyISO = ()=>new Date().toISOString().slice(0,10);
+const vacioFC = {type:"FeatureCollection",features:[]};
+const TC = new Map();
+const tileCls = (u)=>{ if(!TC.has(u)) TC.set(u, leerTile(u).catch((e)=>{ TC.delete(u); throw e; })); return TC.get(u); };
+function pip(x,y,ring){ let d=false; for(let i=0,j=ring.length-1;i<ring.length;j=i++){ const xi=ring[i][0],yi=ring[i][1],xj=ring[j][0],yj=ring[j][1];
+  if((yi>y)!==(yj>y) && x<(xj-xi)*(y-yi)/(yj-yi)+xi) d=!d; } return d; }
+function areaHa(ring){ const lat0=ring.reduce((a,p)=>a+p[1],0)/ring.length, kx=111320*Math.cos(lat0*Math.PI/180), ky=110574; let s=0;
+  for(let i=0,j=ring.length-1;i<ring.length;j=i++) s+=ring[j][0]*kx*ring[i][1]*ky-ring[i][0]*kx*ring[j][1]*ky; return Math.abs(s)/2/1e4; }
+const cerrarAnillo = (r)=>{ const a=r[0], b=r[r.length-1]; return (a[0]===b[0]&&a[1]===b[1]) ? r : r.concat([a]); };
+function cuadrado(lng,lat){ const dlat=LADO_KM/2/111.32, dlon=LADO_KM/2/(111.32*Math.cos(lat*Math.PI/180));
+  return [[lng-dlon,lat-dlat],[lng+dlon,lat-dlat],[lng+dlon,lat+dlat],[lng-dlon,lat+dlat],[lng-dlon,lat-dlat]]; }
+function celdaParcela(lng,lat){ if(!D) return null; const {z,tx0,ty0}=D, c=Math.floor((lon2t(lng,z)-tx0)*T/B), r=Math.floor((lat2t(lat,z)-ty0)*T/B);
+  if(c<0||r<0) return null; const w=t2lon(tx0+c*B/T,z), e=t2lon(tx0+(c+1)*B/T,z), n=t2lat(ty0+r*B/T,z), s=t2lat(ty0+(r+1)*B/T,z);
+  return [[w,s],[e,s],[e,n],[w,n],[w,s]]; }
+
+let INF = null, ULT = null;
+function panel(html){ const ce=$("cert"); ce.classList.add("on"); ce.innerHTML=`<button class="x" onclick="cerrarCert()" aria-label="Cerrar">×</button>`+html; }
+async function informe(anillo, nombre){
+  const id={}; INF=id; const ring=cerrarAnillo(anillo);
+  const xs=ring.map(p=>p[0]), ys=ring.map(p=>p[1]), bb=[Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)];
+  const ha=areaHa(ring), cen=[(bb[0]+bb[2])/2,(bb[1]+bb[3])/2];
+  mapR.getSource("caja").setData({type:"Feature",geometry:{type:"Polygon",coordinates:[ring]}});
+  try{ mapR.setLayoutProperty("frec","visibility","none"); }catch(e){}
+  const cab=`<div class="ce-k">Informe hídrico del lote · Napa</div><div class="ce-h">${esc(nombre)}</div><div class="ce-s">${fmt(ha)} ha · ${cen[1].toFixed(4)}, ${cen[0].toFixed(4)}</div>`;
+  if(ha>5000){ panel(cab+`<p class="ce-s" style="margin-top:14px">El lote tiene más de 5.000 ha. Medí lotes individuales para que el mapa tenga sentido agronómico.</p>`); return; }
+  panel(cab+`<div class="carga" id="ceC">Buscando en el catálogo de la NASA todas las pasadas de radar sobre el lote…</div><div class="prog cl"><i id="ceB"></i></div>`);
+  const prog=(f,t)=>{ if(INF!==id) return; const c=$("ceC"), b=$("ceB"); if(c) c.textContent=t; if(b) b.style.width=Math.round(f*100)+"%"; };
   try{
-    let gran;
-    if(D && lng>CFG.zona[0]&&lng<CFG.zona[2]&&lat>CFG.zona[1]&&lat<CFG.zona[3]) gran=D.gran;
-    else { gran={}; (await granulos(bb,CFG.ini,CFG.fin)).forEach(g=>(gran[g.fecha]=gran[g.fecha]||[]).push(g)); }
-    const fechas=Object.keys(gran).sort(); if(!fechas.length) throw new Error("no hay pasadas de radar sobre este punto en el período");
-    const z=ZC, x0=lon2t(bb[0],z),x1=lon2t(bb[2],z),y0=lat2t(bb[3],z),y1=lat2t(bb[1],z), obs=[]; let hechas=0;
-    await enParalelo(fechas,4,async(f)=>{ const k={1:0,2:0,3:0};
+    const fin=hoyISO(), gran={};
+    (await granulos(bb,HIST_INI,fin)).forEach(g=>(gran[g.fecha]=gran[g.fecha]||[]).push(g));
+    const fechas=Object.keys(gran).sort(); if(!fechas.length) throw new Error("no hay pasadas DSWx-S1 sobre este lote");
+    if(INF!==id) return;
+    // grilla de píxeles del lote a zoom 12 (~33 m a esta latitud, cercano a los 30 m de DSWx-S1)
+    const z=ZC, tx0=Math.floor(lon2t(bb[0],z)), tx1=Math.floor(lon2t(bb[2],z)), ty0=Math.floor(lat2t(bb[3],z)), ty1=Math.floor(lat2t(bb[1],z));
+    const nx=tx1-tx0+1, ny=ty1-ty0+1, W=nx*T, H=ny*T;
+    const c0=Math.floor((lon2t(bb[0],z)-tx0)*T), c1=Math.ceil((lon2t(bb[2],z)-tx0)*T), r0=Math.floor((lat2t(bb[3],z)-ty0)*T), r1=Math.ceil((lat2t(bb[1],z)-ty0)*T);
+    const dentro=[], haP=[]; let haLote=0;
+    for(let r=r0;r<r1;r++){ const lat=t2lat(ty0+(r+.5)/T,z), h=haPx(lat,z); for(let c=c0;c<c1;c++){ const lon=t2lon(tx0+(c+.5)/T,z); if(pip(lon,lat,ring)){ dentro.push(r*W+c); haP.push(h); haLote+=h; } } }
+    if(dentro.length<9) throw new Error("el lote es demasiado chico para un radar de 30 m (menos de 9 píxeles)");
+    const npx=dentro.length, porTile={};
+    dentro.forEach((g,i)=>{ const r=(g/W)|0, c=g%W, k=((r/T)|0)*nx+((c/T)|0); (porTile[k]=porTile[k]||[]).push(i); });
+    const tiles=Object.keys(porTile).map(k=>({tx:tx0+(k%nx), ty:ty0+((k/nx)|0), idx:porTile[k]}));
+    const val=new Uint16Array(npx), agu=new Uint16Array(npx), obs=[]; let hechas=0, err=0;
+    await enParalelo(fechas,6,async(f)=>{
+      if(INF!==id) return; let n=0,a=0,g=0;
       try{ const p=await plantilla(f,"anal");
-        for(let ty=Math.floor(y0);ty<=Math.floor(y1);ty++) for(let tx=Math.floor(x0);tx<=Math.floor(x1);tx++){
-          const a=await leerTile(urlTile(p.tpl,z,tx,ty)); if(!a) continue;
-          for(let r=0;r<T;r++){ const yy=ty+(r+.5)/T; if(yy<y0||yy>y1) continue; for(let c=0;c<T;c++){ const xx=tx+(c+.5)/T; if(xx<x0||xx>x1) continue; const v=a[r*T+c]; if(v) k[v]++; } } } }
-      catch(e){ console.warn(f,e); }
-      const n=k[1]+k[2]+k[3]; if(n>=10){ const g=(gran[f]||[]).find(g=>!g.bb||(lng>=g.bb[0]&&lng<=g.bb[2]&&lat>=g.bb[1]&&lat<=g.bb[3]))||(gran[f]||[])[0]; obs.push(punto(f,n,k[2]+k[3],k[3],g&&g.ur)); }
-      hechas++; const cc=$("ceC"); if(cc) cc.textContent=`Midiendo el campo en ${fechas.length} pasadas de radar: ${hechas} de ${fechas.length}…`; });
-    obs.sort((a,b)=>a.fecha<b.fecha?-1:1); verConstancia(lng,lat,bb,obs);
-  }catch(e){ console.error(e); const cc=$("ceC"); if(cc){cc.className="ce-s";cc.textContent="No se pudo medir: "+e.message;} }
+        for(const t of tiles){ const cl=await tileCls(urlTile(p.tpl,z,t.tx,t.ty)); if(!cl) continue;
+          for(const i of t.idx){ const gi=dentro[i], r=((gi/W)|0)-(t.ty-ty0)*T, c=(gi%W)-(t.tx-tx0)*T, v=cl[r*T+c]; if(!v) continue;
+            val[i]++; n++; if(v>1){ agu[i]++; a++; if(v===3) g++; } } } }
+      catch(e){ err++; console.warn(f,e); }
+      if(n>=Math.max(9,COBERTURA*npx)){ const gr=(gran[f]||[]).find(x=>!x.bb||(cen[0]>=x.bb[0]&&cen[0]<=x.bb[2]&&cen[1]>=x.bb[1]&&cen[1]<=x.bb[3]))||(gran[f]||[])[0];
+        obs.push(punto(f,n,a,g,gr&&gr.ur)); }
+      hechas++; prog(hechas/fechas.length,`Midiendo el lote en ${fechas.length} pasadas de radar (${fmtC(fechas[0])} de ${fechas[0].slice(0,4)} a hoy): ${hechas} de ${fechas.length}${err?` · ${err} sin respuesta`:""}`);
+    });
+    if(INF!==id) return;
+    if(err && err>=fechas.length*0.9) throw new Error("el servidor de mapas no respondió. Probá con el proxy en Ajustes");
+    obs.sort((x,y)=>x.fecha<y.fecha?-1:1);
+    // frecuencia por píxel y ambientes
+    const sup={p:0,f:0,o:0,s:0}; let haCub=0; const cls=new Array(npx);
+    for(let i=0;i<npx;i++){ if(val[i]<MIN_OBS){ cls[i]=null; continue; } const k=claseDe(agu[i]/val[i]).k; cls[i]=k; sup[k]+=haP[i]; haCub+=haP[i]; }
+    // capa en el mapa
+    const cw=c1-c0, ch=r1-r0, cv=document.createElement("canvas"); cv.width=cw; cv.height=ch; const cx=cv.getContext("2d"), im=cx.createImageData(cw,ch);
+    for(let i=0;i<npx;i++){ const k=cls[i]; const gi=dentro[i], r=((gi/W)|0)-r0, c=(gi%W)-c0, o=(r*cw+c)*4;
+      if(k===null) im.data.set([255,255,255,60],o); else im.data.set(AMB.find(a=>a.k===k).col,o); }
+    cx.putImageData(im,0,0);
+    const w=t2lon(tx0+c0/T,z), e=t2lon(tx0+c1/T,z), n=t2lat(ty0+r0/T,z), s=t2lat(ty0+r1/T,z);
+    cv.toBlob((b)=>{ if(INF!==id) return; mapR.getSource("frec").updateImage({url:URL.createObjectURL(b),coordinates:[[w,n],[e,n],[e,s],[w,s]]}); mapR.setLayoutProperty("frec","visibility","visible"); });
+    ULT={nombre,ring,ha,haLote,fechas,obs,gran,npx,dentro,W,z,tx0,ty0,val,agu,cls,sup,haCub};
+    verInforme(ULT);
+  }catch(e){ console.error(e); if(INF!==id) return; const c=$("ceC"); if(c){ c.className="ce-s"; c.textContent="No se pudo medir: "+e.message; } }
 }
-function verConstancia(lng,lat,bb,obs){
-  const ha=(bb[2]-bb[0])*111.32*Math.cos(lat*Math.PI/180)*(bb[3]-bb[1])*111.32*100, e=estado(obs), d=obs.length>1?duracion(obs):{min:0,max:0};
-  const pk=obs.length?obs.reduce((a,b)=>b.pct>a.pct?b:a):null;
-  const EST={r:["Anegamiento prolongado confirmado",`Más de ${CFG.N} días con más del ${CFG.U}% del campo bajo agua, entre pasadas de radar consecutivas.`],
-    a:["Anegamiento posible: verificar en el campo","El radar no permite confirmarlo ni descartarlo con la confianza exigida. Corresponde una visita."],
-    g:["Sin anegamiento prolongado",`El campo no superó ${CFG.N} días con más del ${CFG.U}% bajo agua.`],x:["Sin datos suficientes","Hay menos de dos pasadas de radar válidas sobre este campo."]}[e];
-  const mapaC=(p)=>p>=CFG.U?`rgba(61,139,255,${.35+.65*p/100})`:`rgba(61,139,255,${.08+.3*p/100})`;
-  const ev=obs.map(o=>`<li>${fmtC(o.fecha)}: ${o.pct}% con agua (${o.lo} a ${o.hi}%)${o.veg?`, ${o.veg}% bajo vegetación`:""}${o.ur?` · <a href="https://cmr.earthdata.nasa.gov/search/granules.umm_json?short_name=${SN}&granule_ur=${encodeURIComponent(o.ur)}" target="_blank" rel="noopener">archivo NASA</a>`:""}</li>`).join("");
-  $("cert").innerHTML=`<button class="x" onclick="cerrarCert()" aria-label="Cerrar">×</button>
-   <div class="ce-k">Constancia satelital de anegamiento · prototipo</div>
-   <div class="ce-h">Campo de ${fmt(ha)} ha en ${lat.toFixed(4)}, ${lng.toFixed(4)}</div>
-   <div class="ce-s">Período ${fmtF(CFG.ini)} al ${fmtF(CFG.fin)}</div>
+const esc=(t)=>String(t).replace(/[&<>"]/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const mesC=(f)=>new Date(f+"T12:00:00Z").toLocaleDateString("es-AR",{month:"short",year:"2-digit",timeZone:"UTC"});
+function serieSVG(obs,ini,fin){
+  const Wd=360,Hd=128,L=30,R=6,Tp=8,Bt=22, d0=DIA(ini), d1=DIA(fin), X=(f)=>L+(DIA(f)-d0)/Math.max(1,d1-d0)*(Wd-L-R), Y=(v)=>Tp+(1-v/100)*(Hd-Tp-Bt);
+  let s=`<svg viewBox="0 0 ${Wd} ${Hd}" class="ser" role="img" aria-label="Porcentaje del lote con agua en cada pasada">`;
+  s+=`<rect x="${X(CFG.ini)}" y="${Tp}" width="${Math.max(0,X(CFG.fin)-X(CFG.ini))}" height="${Hd-Tp-Bt}" fill="#2868d614"/>`;
+  [0,50,100].forEach(v=>s+=`<line x1="${L}" x2="${Wd-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="#e2e0d9"/><text x="${L-4}" y="${Y(v)+3}" text-anchor="end">${v}%</text>`);
+  for(let t=new Date(ini.slice(0,7)+"-01T12:00:00Z");t<=new Date(fin+"T12:00:00Z");t.setUTCMonth(t.getUTCMonth()+1)){ const f=t.toISOString().slice(0,10);
+    if(t.getUTCMonth()%3===0 && f>=ini) s+=`<line x1="${X(f)}" x2="${X(f)}" y1="${Hd-Bt}" y2="${Hd-Bt+4}" stroke="#b9b5ab"/><text x="${X(f)}" y="${Hd-6}" text-anchor="middle">${mesC(f)}</text>`; }
+  s+=`<line x1="${L}" x2="${Wd-R}" y1="${Y(CFG.U)}" y2="${Y(CFG.U)}" stroke="#c8372d" stroke-dasharray="3 3"/>`;
+  if(obs.length){ s+=`<polygon fill="#2868d633" points="${obs.map(o=>`${X(o.fecha)},${Y(o.hi)}`).join(" ")} ${obs.slice().reverse().map(o=>`${X(o.fecha)},${Y(o.lo)}`).join(" ")}"/>`;
+    s+=`<polyline fill="none" stroke="#2868d6" stroke-width="1.5" points="${obs.map(o=>`${X(o.fecha)},${Y(o.pct)}`).join(" ")}"/>`;
+    obs.forEach(o=>s+=`<circle cx="${X(o.fecha)}" cy="${Y(o.pct)}" r="1.6" fill="#16324f"><title>${fmtC(o.fecha)}: ${o.pct}% (${o.lo} a ${o.hi}%)</title></circle>`); }
+  return s+`</svg>`; }
+function verInforme(I){
+  const {obs,sup,haCub,ha,haLote}=I, fin=hoyISO(), pct=(v)=>haCub?Math.round(v/haCub*100):0;
+  const ev=obs.filter(o=>o.fecha>=CFG.ini&&o.fecha<=CFG.fin), e=estado(ev), d=ev.length>1?duracion(ev):{min:0,max:0};
+  const pk=obs.length?obs.reduce((a,b)=>b.pct>a.pct?b:a):null, bajos=sup.p+sup.f;
+  const reco = !haCub
+    ? `<b>Todavía no hay suficientes pasadas para clasificar el lote</b> (hacen falta ${MIN_OBS} por píxel). La serie y el evento de abajo sí son válidos.`
+    : bajos>=0.05*haCub
+    ? `<b>${fmt(bajos)} ha (${pct(bajos)}% del lote) se anegan con frecuencia.</b> Son candidatas a manejarse como ambiente bajo: menor densidad y dosis de fertilizante, o un cultivo que tolere el anegamiento. Conviene cruzarlas con mapas de rinde y una recorrida antes de definir la prescripción.`
+    : sup.o>=0.05*haCub
+    ? `<b>El lote se anegó solo en eventos fuertes</b> (${fmt(sup.o)} ha, ${pct(sup.o)}%). El riesgo es bajo en años normales; en campañas húmedas esas zonas son las primeras en quedar bajo agua.`
+    : `<b>No se detectaron bajos que se aneguen</b> en ${obs.length} pasadas de radar. A 30 m de resolución, el lote se comporta como un ambiente homogéneo frente al agua.`;
+  const EST={r:["Anegamiento prolongado confirmado",`Más de ${CFG.N} días con más del ${CFG.U}% del lote bajo agua, entre pasadas consecutivas.`],
+    a:["Anegamiento posible: verificar a campo","El radar no permite confirmarlo ni descartarlo con 95% de confianza."],
+    g:["Sin anegamiento prolongado",`El lote no superó ${CFG.N} días con más del ${CFG.U}% bajo agua.`],x:["Sin datos suficientes","Menos de dos pasadas válidas en el período."]}[e];
+  const n=obs.length, uno=obs[0], ult=obs[n-1];
+  const link=(o)=>o&&o.ur?`<a href="https://cmr.earthdata.nasa.gov/search/granules.umm_json?short_name=${SN}&granule_ur=${encodeURIComponent(o.ur)}" target="_blank" rel="noopener">${esc(o.ur)}</a>`:"—";
+  panel(`<div class="ce-k">Informe hídrico del lote · Napa</div><div class="ce-h">${esc(I.nombre)}</div>
+   <div class="ce-s">${fmt(ha)} ha · ${n} pasadas de radar válidas entre ${fmtF(uno?uno.fecha:HIST_INI)} y ${fmtF(ult?ult.fecha:fin)}</div>
+   <div class="sec">Ambientes hídricos</div>
+   <div class="barra-amb">${AMB.map(a=>sup[a.k]?`<i style="flex:${sup[a.k]};background:${a.css}"></i>`:"").join("")}</div>
+   <table class="amb">${AMB.map(a=>`<tr><td><i style="background:${a.css}"></i>${a.nom}<small>${a.det}</small></td><td>${fmt(sup[a.k])} ha</td><td>${pct(sup[a.k])}%</td></tr>`).join("")}</table>
+   <p class="ce-s">Frecuencia de anegamiento por píxel de 30 m: pasadas con agua sobre pasadas válidas. Se clasificó el ${Math.round(haCub/haLote*100)}% del lote (píxeles con al menos ${MIN_OBS} observaciones); el resto se ve en blanco en el mapa.</p>
+   <div class="reco">${reco}</div>
+   <div class="sec">Serie histórica</div>
+   ${serieSVG(obs,uno?uno.fecha:HIST_INI,fin)}
+   <div class="tiraF"><span>% del lote con agua en cada pasada · banda: intervalo de 95%</span><span style="color:#c8372d">— umbral ${CFG.U}%</span></div>
+   <div class="ce-kp" style="margin-top:10px"><div><small>Máximo con agua</small><b>${pk?pk.pct+"%":"—"}</b><small>${pk?fmtF(pk.fecha):""}</small></div><div><small>Pasadas con más del ${CFG.U}%</small><b>${obs.filter(o=>o.pct>=CFG.U).length}</b><small>de ${n}</small></div></div>
+   <div class="sec">Evento ${fmtC(CFG.ini)} al ${fmtC(CFG.fin)} de ${CFG.fin.slice(0,4)} (zona sombreada)</div>
    <div class="ce-est ce-${e}"><b>${EST[0]}</b><small>${EST[1]}</small></div>
-   <div class="ce-kp"><div><small>Días bajo agua confirmados</small><b>${d.min}</b></div><div><small>Días posibles (como máximo)</small><b>${d.max}</b></div>
-     <div><small>Máximo del campo con agua</small><b>${pk?pk.pct+"%":"—"}</b><small>${pk?fmtC(pk.fecha):""}</small></div><div><small>Veces que pasó el satélite</small><b>${obs.length}</b><small>cada una es una prueba</small></div></div>
-   <div class="tira">${obs.map(o=>`<i class="${o.lo>=CFG.U?"c":""}" style="background:${mapaC(o.pct)}" title="${fmtC(o.fecha)}: ${o.pct}%"></i>`).join("")}</div>
-   <div class="tiraF"><span>${obs[0]?fmtC(obs[0].fecha):""}</span><span>cuánto del campo tenía agua cada vez · punto = seguro</span><span>${obs.length?fmtC(obs[obs.length-1].fecha):""}</span></div>
-   <div class="ce-ev"><b>Evidencia</b>: mapa de agua NASA OPERA DSWx-S1 (30 m), derivado del radar Sentinel-1, que ve a través de las nubes. Cada fecha es una pasada; el intervalo es de 95% de confianza.<ol>${ev}</ol>
-     Método: los días confirmados solo cuentan intervalos entre dos pasadas cuyo límite inferior supera el ${CFG.U}%. No reemplaza el certificado oficial; es la prueba que lo respaldaría.</div>
-   <div class="ce-btn"><button class="pri" onclick="print()">Descargar constancia (PDF)</button><button onclick="cerrarCert()">Otro campo</button></div>`;
+   <div class="ce-kp"><div><small>Días bajo agua confirmados</small><b>${d.min}</b></div><div><small>Días posibles (como máximo)</small><b>${d.max}</b></div></div>
+   <p class="ce-s">Sirve como respaldo técnico para el seguro o la declaración de emergencia agropecuaria; no reemplaza el certificado oficial.</p>
+   <div class="ce-ev"><b>Fuente y método</b>. NASA OPERA DSWx-S1 (mapa de agua de 30 m derivado del radar Sentinel-1, que atraviesa nubes y humo). Clases usadas: agua abierta y vegetación inundada; las máscaras de terreno, sombra y sin dato se descartan. Una pasada cuenta para el lote si cubre al menos el ${Math.round(COBERTURA*100)}% de su superficie. Intervalo binomial con efecto de diseño ${DEFF}. Primer archivo: ${link(uno)}. Último: ${link(ult)}.
+     <br><b>Límites</b>: charcos menores a un píxel de 30 m no se ven; bajo cultivos muy densos el agua puede no detectarse; la historia empieza en septiembre de 2024, así que las frecuencias se afinan con cada pasada nueva (cada 6 a 12 días).</div>
+   <div class="ce-btn"><button class="pri" onclick="print()">Imprimir o PDF</button><button onclick="csvSerie()">Serie (CSV)</button><button onclick="csvMapa()">Mapa por píxel (CSV)</button><button onclick="geoLote()">Lote (GeoJSON)</button></div>`);
 }
-function cerrarCert(){ $("cert").classList.remove("on"); mapR.getSource("caja").setData({type:"FeatureCollection",features:[]}); }
-mapR.on("click",(e)=>{ if(CAMPO||document.body.classList.contains("a2")||document.body.classList.contains("a3")) constancia(e.lngLat.lng,e.lngLat.lat); });
-$("miUbic").onclick=()=>navigator.geolocation?navigator.geolocation.getCurrentPosition((p)=>{mapR.flyTo({center:[p.coords.longitude,p.coords.latitude],zoom:13});constancia(p.coords.longitude,p.coords.latitude);},()=>aviso("No se pudo obtener la ubicación. Tocá el mapa.",3000)):aviso("Tocá el mapa",2000);
+function bajar(nombre,texto,tipo){ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([texto],{type:tipo})); a.download=nombre; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1000); }
+const slug=(t)=>String(t).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/gi,"_").replace(/^_|_$/g,"").toLowerCase()||"lote";
+function csvSerie(){ if(!ULT) return; bajar(`napa_${slug(ULT.nombre)}_serie.csv`,"fecha,pct_agua,ic95_inf,ic95_sup,pct_vegetacion_inundada,pixeles_validos,granulo_nasa\n"+ULT.obs.map(o=>[o.fecha,o.pct,o.lo,o.hi,o.veg,o.n,o.ur||""].join(",")).join("\n"),"text/csv"); }
+function csvMapa(){ if(!ULT) return; const {dentro,W,z,tx0,ty0,val,agu,cls}=ULT, f=["lon,lat,pasadas_validas,pasadas_con_agua,frecuencia,ambiente"];
+  dentro.forEach((g,i)=>{ const r=(g/W)|0, c=g%W; f.push([t2lon(tx0+(c+.5)/T,z).toFixed(6),t2lat(ty0+(r+.5)/T,z).toFixed(6),val[i],agu[i],val[i]?(agu[i]/val[i]).toFixed(3):"",cls[i]?AMB.find(a=>a.k===cls[i]).nom:"sin datos suficientes"].join(",")); });
+  bajar(`napa_${slug(ULT.nombre)}_mapa.csv`,f.join("\n"),"text/csv"); }
+function geoLote(){ if(!ULT) return; const p={nombre:ULT.nombre,ha:Math.round(ULT.ha*10)/10,pasadas:ULT.obs.length}; AMB.forEach(a=>p["ha_"+a.k]=Math.round(ULT.sup[a.k]*10)/10);
+  bajar(`napa_${slug(ULT.nombre)}.geojson`,JSON.stringify({type:"FeatureCollection",features:[{type:"Feature",properties:p,geometry:{type:"Polygon",coordinates:[ULT.ring]}}]}),"application/geo+json"); }
+function cerrarCert(){ INF=null; $("cert").classList.remove("on"); mapR.getSource("caja").setData(vacioFC); try{ mapR.setLayoutProperty("frec","visibility","none"); }catch(e){} }
+
+/* ---------- dibujar o subir lotes ---------- */
+let DIB=null;
+function verDibujo(){ const p=DIB?DIB.pts:[]; mapR.getSource("dib").setData({type:"FeatureCollection",features:(p.length>1?[{type:"Feature",geometry:{type:"LineString",coordinates:p}}]:[]).concat(p.map(c=>({type:"Feature",geometry:{type:"Point",coordinates:c}})))}); }
+function empezarDibujo(){ cerrarCert(); DIB={pts:[]}; mapR.doubleClickZoom.disable(); mapR.getCanvas().style.cursor="crosshair"; $("bDib").textContent="Cancelar dibujo"; aviso("Clic en cada esquina del lote. Doble clic para cerrarlo. Esc cancela."); verDibujo(); }
+function cancelarDibujo(){ DIB=null; verDibujo(); setTimeout(()=>mapR.doubleClickZoom.enable(),300); $("bDib").textContent="Dibujar lote"; aviso(""); }
+function terminarDibujo(){ const p=[]; DIB.pts.forEach(q=>{ const u=p[p.length-1]; if(!u||Math.abs(u[0]-q[0])>1e-6||Math.abs(u[1]-q[1])>1e-6) p.push(q); }); cancelarDibujo();
+  if(p.length<3){ aviso("Un lote necesita al menos 3 esquinas",2500); return; } informe(p,"Lote dibujado"); }
+function lotesDeArchivo(txt){ const out=[];
+  if(/^\s*</.test(txt)){ const x=new DOMParser().parseFromString(txt,"text/xml");
+    x.querySelectorAll("Placemark").forEach((pm)=>{ const nm=pm.querySelector("name"); pm.querySelectorAll("Polygon").forEach((pg)=>{ const c=pg.querySelector("outerBoundaryIs coordinates")||pg.querySelector("coordinates"); if(!c) return;
+      const ring=c.textContent.trim().split(/\s+/).map(t=>t.split(",").slice(0,2).map(Number)).filter(q=>q.length===2&&q.every(isFinite)); if(ring.length>=3) out.push({nombre:(nm&&nm.textContent.trim())||`Lote ${out.length+1}`,ring}); }); }); }
+  else { const j=JSON.parse(txt), fs=j.type==="FeatureCollection"?j.features:j.type==="Feature"?[j]:[{geometry:j,properties:{}}];
+    fs.forEach((f)=>{ const g=f.geometry||{}, pr=f.properties||{}, ps=g.type==="Polygon"?[g.coordinates]:g.type==="MultiPolygon"?g.coordinates:[];
+      ps.forEach((pc)=>{ if(pc&&pc[0]&&pc[0].length>=3) out.push({nombre:String(pr.nombre||pr.name||pr.Name||pr.lote||pr.id||`Lote ${out.length+1}`),ring:pc[0].map(c=>[+c[0],+c[1]])}); }); }); }
+  return out; }
+let LOTES=[];
+function irALote(i){ const L=LOTES[i]; if(!L) return; document.querySelectorAll("#lotesArch button").forEach((b,k)=>b.classList.toggle("on",k===i));
+  const xs=L.ring.map(p=>p[0]), ys=L.ring.map(p=>p[1]); mapR.fitBounds([[Math.min(...xs),Math.min(...ys)],[Math.max(...xs),Math.max(...ys)]],{padding:(()=>{const h=Math.min(440,innerWidth*.28);return {top:110,bottom:110,left:h,right:h};})(),maxZoom:15,duration:800});
+  informe(L.ring,L.nombre); }
+$("bDib").onclick=()=>DIB?cancelarDibujo():empezarDibujo();
+$("bArch").onchange=async(e)=>{ const f=e.target.files[0]; e.target.value=""; if(!f) return;
+  if(/\.kmz$/i.test(f.name)){ aviso("Los KMZ vienen comprimidos: abrilo en Google Earth y guardalo como KML",4000); return; }
+  try{ LOTES=lotesDeArchivo(await f.text()); }catch(err){ LOTES=[]; }
+  if(!LOTES.length){ aviso("No encontré polígonos de lotes en el archivo",3000); return; }
+  const fc={type:"FeatureCollection",features:LOTES.map(L=>({type:"Feature",properties:{},geometry:{type:"Polygon",coordinates:[cerrarAnillo(L.ring)]}}))}; mapR.getSource("lotes").setData(fc);
+  $("lotesArch").innerHTML=`<small>${LOTES.length} lote${LOTES.length>1?"s":""} en ${esc(f.name)}</small>`+LOTES.map((L,i)=>`<button onclick="irALote(${i})">${esc(L.nombre)} · ${fmt(areaHa(L.ring))} ha</button>`).join("");
+  irALote(0); };
+mapR.on("dblclick",(e)=>{ if(DIB){ e.preventDefault(); terminarDibujo(); } });
+mapR.on("click",(e)=>{ const q=[e.lngLat.lng,e.lngLat.lat];
+  if(DIB){ DIB.pts.push(q); verDibujo(); return; }
+  const a2=document.body.classList.contains("a2"), a3=document.body.classList.contains("a3");
+  if(a3){ const c=celdaParcela(q[0],q[1]); if(c) return informe(c,"Parcela de la cuadrícula"); }
+  if(CAMPO||a2||a3) informe(cuadrado(q[0],q[1]),"Campo de 1 km² alrededor del punto"); });
+$("miUbic").onclick=()=>navigator.geolocation?navigator.geolocation.getCurrentPosition((p)=>{mapR.flyTo({center:[p.coords.longitude,p.coords.latitude],zoom:13});informe(cuadrado(p.coords.longitude,p.coords.latitude),"Campo de 1 km² en tu ubicación");},()=>aviso("No se pudo obtener la ubicación. Tocá el mapa.",3000)):aviso("Tocá el mapa",2000);
 
 /* ---------- actos ---------- */
 function acto(n){
   document.body.classList.remove("a1","a2","a3"); document.body.classList.add("a"+n); document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.a==n));
-  ponerCorte(corte); if(n!==1) parar(); if(n===1) cerrarCert();
+  ponerCorte(corte); if(n!==1) parar(); if(DIB) cancelarDibujo(); if(n===1) cerrarCert();
   try{ mapR.setLayoutProperty("parc","visibility",n===3?"visible":"none"); mapR.setLayoutProperty("agua","visibility",n===3?"none":"visible"); }catch(e){}
   mapR.getCanvas().style.cursor=n===1?"":"crosshair";
   if(n===2) qr(); setTimeout(()=>{mapL.resize();mapR.resize();},50);
@@ -403,10 +557,10 @@ function acto(n){
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>acto(+b.dataset.a));
 addEventListener("keydown",(e)=>{ if(e.target.tagName==="INPUT"||CAMPO) return; if("123".includes(e.key)) acto(+e.key);
   if(e.key===" "){e.preventDefault();$("play").click();} if(A&&document.body.classList.contains("a1")){ if(e.key==="ArrowRight"){parar();cuadro(Math.min(D.fechas.length-1,K+1));} if(e.key==="ArrowLeft"){parar();cuadro(Math.max(0,K-1));} }
-  if(e.key==="Escape") cerrarCert(); });
+  if(e.key==="Escape"){ if(DIB) cancelarDibujo(); else cerrarCert(); } });
 function qr(){ const u=location.href.split("#")[0].replace(/[?&]prueba\b/,"")+"#campo";
   if(location.protocol==="file:"){ $("qr").innerHTML='<div style="width:132px;height:132px;display:grid;place-items:center;color:#555;font:12px Inter;text-align:center;line-height:1.3;padding:8px">Publicá la página en el VPS para que el QR funcione</div>'; return; }
-  try{ const q=qrcode(0,"M"); q.addData(u); q.make(); $("qr").innerHTML=q.createImgTag(4,0); $("qrT").textContent="Escaneá, tocá un punto del norte santafesino y recibí la constancia de ese campo. "+u.replace(/^https?:\/\//,""); }catch(e){ $("qr").textContent=u; } }
+  try{ const q=qrcode(0,"M"); q.addData(u); q.make(); $("qr").innerHTML=q.createImgTag(4,0); $("qrT").textContent="Escaneá, tocá un punto del norte santafesino y recibí el informe de ese campo. "+u.replace(/^https?:\/\//,""); }catch(e){ $("qr").textContent=u; } }
 
 /* ---------- guardar y cargar mediciones ---------- */
 function empacar(a){ const o=new Uint8Array(Math.ceil(a.length/4)); for(let i=0;i<a.length;i++) o[i>>2]|=a[i]<<((i&3)*2); let s="",ch=0x8000; for(let i=0;i<o.length;i+=ch) s+=String.fromCharCode.apply(null,o.subarray(i,i+ch)); return btoa(s); }
