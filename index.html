@@ -57,7 +57,7 @@ body:not(.a1) .solo1,body:not(.a2) .solo2,body:not(.a3) .solo3{display:none!impo
 .tot .fila{display:flex;justify-content:space-between;font-size:14px;padding:6px 0;border-top:1px solid var(--line)}.tot .fila i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:8px}
 .cierre{position:absolute;left:24px;bottom:24px;z-index:12;font:600 30px/1.15 var(--disp);max-width:560px;text-shadow:0 2px 16px #000}
 #splash{position:absolute;inset:0;z-index:40;display:grid;place-items:center;background:radial-gradient(ellipse at 30% 20%,#12263bcc,#081018f2 60%)}
-#splash .c{max-width:620px;padding:24px;max-height:100vh;overflow:auto}#splash .pasos{color:var(--ink2);line-height:1.5;padding-left:20px;margin:12px 0}#splash .pasos b,#splash p b{color:var(--ink)}#splash .chico{font-size:13px;color:var(--ink3)}#splash h2{font:700 34px/1.1 var(--disp);margin:0 0 12px;letter-spacing:-.02em}#splash p{color:var(--ink2);line-height:1.5}
+#splash .c{max-width:880px;padding:24px;max-height:100vh;overflow:auto}#splash .pasos{color:var(--ink2);line-height:1.5;padding-left:20px;margin:12px 0}#splash .pasos b,#splash p b{color:var(--ink)}#splash .chico{font-size:13px;color:var(--ink3)}#splash .tag{font:600 12px var(--disp);letter-spacing:.1em;text-transform:uppercase;color:var(--agua);margin-bottom:10px}#splash .tres{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}#splash .tres div{background:#ffffff0d;border:1px solid var(--line);border-radius:12px;padding:14px;font-size:14px;line-height:1.45;color:var(--ink2)}#splash .tres small{display:block;font:600 11px var(--disp);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);margin-bottom:6px}@media (max-width:760px){#splash .tres{grid-template-columns:1fr}}#splash h2{font:700 34px/1.1 var(--disp);margin:0 0 12px;letter-spacing:-.02em}#splash p{color:var(--ink2);line-height:1.5}
 #splash .b{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}#splash button,#splash label{font:600 14px var(--disp);border-radius:10px;padding:12px 18px;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--ink)}
 #splash button.pri{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .prog{height:6px;background:#ffffff1a;border-radius:9px;overflow:hidden;margin-top:18px}.prog i{display:block;height:100%;width:0;background:var(--agua);transition:width .2s}
@@ -68,6 +68,13 @@ body:not(.a1) .solo1,body:not(.a2) .solo2,body:not(.a3) .solo3{display:none!impo
 #aviso{position:absolute;top:64px;left:50%;transform:translateX(-50%);z-index:50;background:#16191cee;border:1px solid var(--line);padding:9px 14px;border-radius:10px;font-size:13px;display:none;max-width:90vw;text-align:center}
 #prueba{position:absolute;bottom:0;left:0;right:0;z-index:60;background:#c8372d;color:#fff;text-align:center;font:600 12px var(--disp);letter-spacing:.08em;padding:4px;display:none}
 .leyenda{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--ink2);margin-top:6px}.leyenda i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.clave{margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.4;color:var(--ink2);max-width:420px;pointer-events:none;text-shadow:none}
+.clave>b{display:block;font:600 11px var(--disp);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);margin-bottom:8px}
+.clave div{display:flex;gap:9px;align-items:flex-start;margin:5px 0}.clave div b{color:var(--ink)}.clave p{margin:8px 0 0!important;font-size:12px!important;color:var(--ink3)!important}
+.clave .sw{flex:none;width:14px;height:14px;border-radius:3px;margin-top:2px;display:inline-block;box-sizing:border-box}
+.clave.flot{position:absolute;left:24px;top:250px;z-index:11}
+.titulo.solo1 .clave{pointer-events:none}
+@media (max-width:760px){.clave{max-width:none;font-size:12px}.clave.flot{right:8px;left:8px;top:auto;bottom:8px}.lado2{display:none}}
 /* celular */
 body.campo header nav,body.campo .titulo,body.campo .barra,body.campo .lado,body.campo #swipe,body.campo .lado2,body.campo .tot,body.campo .cierre{display:none!important}
 .movil{display:none}body.campo .movil{display:block;position:absolute;left:0;right:0;top:56px;z-index:12;padding:10px 16px;background:linear-gradient(#081018ee,#08101800)}
@@ -81,25 +88,40 @@ body.campo header nav,body.campo .titulo,body.campo .barra,body.campo .lado,body
 <div id="swipe" class="solo1"><i>⇔</i></div>
 
 <header>
-  <div class="logo">NAPA<small>Space Apps 2026 · Dancing with the SARs</small></div>
+  <div class="logo">NAPA<small>Días bajo agua de cada campo, con el radar de la NASA</small></div>
   <nav><button data-a="1" class="on">1 · Lo que nadie vio</button><button data-a="2">2 · Tu campo</button><button data-a="3">3 · Todos los campos</button></nav>
   <div class="sp"></div><button class="ico" id="bAj" aria-label="Ajustes">Ajustes</button>
 </header>
 
-<div class="titulo solo1"><h1>Abril de 2026. El norte de Santa Fe, bajo agua y bajo nubes.</h1><p>A la izquierda, la foto satelital común de ese día: casi todo nubes. A la derecha, lo que vio el radar: <b style="color:var(--agua)">cada mancha azul es agua</b> sobre los campos. Arrastrá la línea blanca para comparar y tocá ▶ para ver cómo avanzó la inundación.</p></div>
+<div class="titulo solo1"><h1>1. Abajo de las nubes había una inundación.</h1><p>Norte de Santa Fe, otoño de 2026. El mismo lugar y el mismo día, visto de dos maneras.</p>
+<div class="clave"><b>Cómo leer el mapa</b>
+<div><i class="sw" style="background:#cfd6dc"></i><span><b>Mitad izquierda:</b> foto satelital común. Lo blanco son nubes.</span></div>
+<div><i class="sw" style="background:var(--agua)"></i><span><b>Mitad derecha, azul:</b> agua que detectó el radar.</span></div>
+<div><i class="sw" style="background:var(--veg)"></i><span><b>Violeta:</b> agua debajo de cultivos o pastos.</span></div>
+<div><i class="sw" style="background:var(--agua);opacity:.45"></i><span><b>Azul tenue:</b> agua vista unos días antes.</span></div>
+<p>Arrastrá la línea blanca ⇔ para comparar. ▶ muestra la inundación pasada por pasada.</p></div></div>
 <div class="lado solo1" id="ladoL">Foto satelital común<small id="ladoLt">Las nubes tapan todo</small></div>
 <div class="lado solo1" id="ladoR">Radar<small>Ve el agua a través de las nubes</small></div>
 <div class="barra solo1">
   <button id="play" aria-label="Reproducir">▶</button>
   <div><div class="fechaBig" id="fBig">—<small>día en que pasó el satélite</small></div><svg id="spark" viewBox="0 0 600 64" preserveAspectRatio="none" aria-label="Hectáreas con agua por fecha"></svg>
-    <div class="leyenda"><span><i style="background:var(--agua)"></i>Agua abierta</span><span><i style="background:var(--veg)"></i>Agua bajo vegetación</span><span style="opacity:.75"><i style="background:var(--agua);opacity:.45"></i>Agua vista unos días antes</span><span style="opacity:.75">Línea: hectáreas bajo agua día a día (tocala para saltar)</span></div></div>
+    <div class="leyenda">Línea: hectáreas bajo agua en cada pasada del satélite. Tocala para saltar a esa fecha.</div></div>
   <div class="cont"><b id="cnt">0</b> <span>hectáreas bajo agua</span><small id="cntS">en toda la zona, ese día</small></div>
 </div>
 
-<div class="titulo solo2"><h1>Tocá cualquier campo.</h1><p>Napa mide ese campo (unas 100 hectáreas) cada vez que pasó el satélite y te dice cuántos días estuvo bajo agua. Esa constancia es la prueba para el seguro o para pedir la emergencia agropecuaria.</p></div>
+<div class="titulo solo2"><h1>2. Tocá un campo y sale su prueba.</h1><p>Napa mide ese campo (unas 100 hectáreas) cada vez que pasó el satélite y te dice cuántos días estuvo bajo agua. Esa constancia es la prueba para el seguro o para pedir la emergencia agropecuaria.</p></div>
+<div class="clave solo2 flot"><b>Cómo leer el mapa</b>
+<div><i class="sw" style="background:var(--agua)"></i><span><b>Azul:</b> agua que vio el radar.</span></div>
+<div><i class="sw" style="background:transparent;border:2px solid #fff"></i><span><b>Recuadro blanco:</b> el campo que tocaste (1 km², unas 100 ha).</span></div>
+<p>A la derecha aparece su constancia: cuántos días estuvo bajo agua y con qué archivos de la NASA se midió.</p></div>
 <div class="lado2 solo2"><div id="qr"></div><div><b>Probalo en tu celular</b><p id="qrT">Escaneá el código, tocá un punto del norte santafesino y recibí la constancia de ese campo.</p></div></div>
 
-<div class="titulo solo3"><h1>Todos los campos. Ni un solo trámite.</h1><p id="t3s">Cada cuadrito es un campo de unas 110 hectáreas. Rojo: estuvo bajo agua demasiado tiempo. Naranja: puede ser, hay que ir a ver. Verde: no se anegó tanto. Tocá uno para ver su constancia.</p></div>
+<div class="titulo solo3"><h1>3. Toda la zona, sin un solo trámite.</h1><p id="t3s">Todos los campos de la zona, medidos de una vez.</p></div>
+<div class="clave solo3 flot"><b>Cómo leer el mapa</b>
+<div><i class="sw" style="background:var(--red)"></i><span><b>Rojo:</b> más de <span class="uD">10</span> días bajo agua, confirmado. Calificaría para el seguro.</span></div>
+<div><i class="sw" style="background:var(--amb)"></i><span><b>Naranja:</b> dudoso. Hay que mandar a alguien a ver.</span></div>
+<div><i class="sw" style="background:var(--grn)"></i><span><b>Verde:</b> no se anegó tanto tiempo.</span></div>
+<p>Cada cuadrito es un campo. Tocá uno para ver su constancia.</p></div>
 <div class="tot solo3"><div class="n" id="t3n">—</div><div class="l" id="t3l">hectáreas que estuvieron más de 10 días bajo agua, confirmadas por radar</div>
   <div class="fila"><span><i style="background:var(--red)"></i>Más de <span class="uD">10</span> días bajo agua</span><b id="t3r">—</b></div>
   <div class="fila"><span><i style="background:var(--amb)"></i>Dudoso: hay que ir a ver</span><b id="t3a">—</b></div>
@@ -122,11 +144,14 @@ body.campo header nav,body.campo .titulo,body.campo .barra,body.campo .lado,body
 </div>
 
 <div id="splash"><div class="c">
-  <h2>Cuando un campo se inunda, hay que probarlo. Napa lo prueba desde el espacio.</h2>
-  <p>Para cobrar el seguro o pedir la emergencia agropecuaria, el productor tiene que demostrar que su campo estuvo bajo agua. Hoy eso es una declaración jurada y esperar a un inspector. Las fotos satelitales comunes no ayudan, porque cuando llueve hay nubes.</p>
-  <p>El <b>radar</b> de los satélites ve a través de las nubes. Napa usa los mapas de agua que la NASA arma con ese radar y mide, campo por campo, <b>cuántos días estuvo bajo agua</b>.</p>
-  <ol class="pasos"><li><b>Lo que nadie vio:</b> la inundación de abril de 2026 escondida debajo de las nubes.</li><li><b>Tu campo:</b> tocás un campo y sale su constancia, lista para presentar.</li><li><b>Todos los campos:</b> la zona entera revisada de una vez, sin trámites.</li></ol>
-  <p class="chico">Se miden <b id="spHa"></b> entre el <b id="spIni"></b> y el <b id="spFin"></b>. Tarda uno o dos minutos.</p>
+  <div class="tag">NASA Space Apps 2026 · Dancing with the SARs</div>
+  <h2>Napa mide cuántos días estuvo bajo agua cada campo, con el radar de la NASA.</h2>
+  <div class="tres">
+    <div><small>El problema</small>Para cobrar un seguro o pedir la emergencia agropecuaria, el productor tiene que probar que su campo se inundó. Hoy es una declaración jurada y una visita que tarda semanas.</div>
+    <div><small>Por qué el radar</small>Cuando llueve hay nubes, y las fotos satelitales comunes no ven nada. El radar de Sentinel-1 ve a través de las nubes, y la NASA (OPERA DSWx-S1) lo convierte en mapas de agua.</div>
+    <div><small>Lo que agrega Napa</small>Mide cada campo en cada pasada del satélite, cuenta los días bajo agua con un margen de error y entrega una constancia con los archivos de la NASA como prueba.</div>
+  </div>
+  <p class="chico">Caso real: la inundación del norte de Santa Fe, entre el <b id="spIni"></b> y el <b id="spFin"></b>, sobre <b id="spHa"></b>. Medir tarda uno o dos minutos.</p>
   <div class="b"><button class="pri" id="bMedir">Medir la inundación</button><label>Cargar mediciones guardadas<input type="file" id="bCargar" accept=".json" hidden></label></div>
   <div class="prog"><i id="progB"></i></div><div id="progT"></div>
 </div></div>
@@ -259,9 +284,9 @@ const centro=[(CFG.zona[0]+CFG.zona[2])/2,(CFG.zona[1]+CFG.zona[3])/2];
 const VACIO="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
 const estilo=(extra)=>({version:8,sources:Object.assign({base:{type:"raster",tiles:[EOX],tileSize:256,maxzoom:14,attribution:'Sentinel-2 cloudless 2024 by <a href="https://s2maps.eu">EOX</a>'}},extra.s),layers:[{id:"base",type:"raster",source:"base",paint:{"raster-brightness-max":.72,"raster-saturation":-.35}}].concat(extra.l)});
 const zonaCoords=()=>[[CFG.zona[0],CFG.zona[3]],[CFG.zona[2],CFG.zona[3]],[CFG.zona[2],CFG.zona[1]],[CFG.zona[0],CFG.zona[1]]];
-const mapL=new maplibregl.Map({container:"mapL",center:centro,zoom:8.6,pitch:30,attributionControl:{compact:true},
+const mapL=new maplibregl.Map({container:"mapL",center:centro,zoom:8.6,pitch:0,attributionControl:{compact:true},
   style:estilo({s:{opt:{type:"raster",tiles:[MODIS(CFG.ini)],tileSize:256,maxzoom:9,attribution:"NASA GIBS · MODIS Terra"}},l:[{id:"opt",type:"raster",source:"opt"}]})});
-const mapR=new maplibregl.Map({container:"mapR",center:centro,zoom:8.6,pitch:30,attributionControl:{compact:true},
+const mapR=new maplibregl.Map({container:"mapR",center:centro,zoom:8.6,pitch:0,attributionControl:{compact:true},
   style:estilo({s:{agua:{type:"image",url:VACIO,coordinates:zonaCoords()},hd:{type:"raster",tiles:["data:,"],tileSize:T,minzoom:8,maxzoom:14,attribution:"NASA OPERA DSWx-S1 vía titiler-cmr"},
     parc:{type:"image",url:VACIO,coordinates:zonaCoords()},caja:{type:"geojson",data:{type:"FeatureCollection",features:[]}},
     zona:{type:"geojson",data:{type:"Feature",geometry:{type:"Polygon",coordinates:[[...zonaCoords(),zonaCoords()[0]]]}}}},
@@ -317,7 +342,7 @@ function pintarParcelas(){
   c.toBlob((b)=>mapR.getSource("parc").updateImage({url:URL.createObjectURL(b),coordinates:[[w,n],[e,n],[e,s],[w,s]]}));
   $("t3n").textContent=fmt(tot.haR); $("t3r").textContent=`${fmt(tot.r)} parcelas`; $("t3a").textContent=`${fmt(tot.a)} parcelas`; $("t3g").textContent=`${fmt(tot.g)} parcelas`;
   $("t3l").textContent=`hectáreas que estuvieron más de ${CFG.N} días bajo agua, confirmadas por radar`; document.querySelectorAll(".uD").forEach(e=>e.textContent=CFG.N);
-  $("t3s").textContent=`Cada cuadrito es un campo de unas ${fmt(A.haParcela)} hectáreas. Rojo: más de ${CFG.N} días bajo agua, confirmado. Naranja: puede ser, hay que ir a ver. Verde: no se anegó tanto. Tocá uno para ver su constancia.`;
+  $("t3s").textContent=`Todos los campos de la zona, medidos de una vez. Cada cuadrito es un campo de unas ${fmt(A.haParcela)} hectáreas.`;
 }
 
 /* ---------- constancia de un campo ---------- */
@@ -394,7 +419,7 @@ $("bCargar").onchange=async(e)=>{ const f=e.target.files[0]; if(!f) return; try{
   if(j.prueba) $("prueba").style.display="block"; listo(); }catch(err){ console.error(err); $("progT").textContent="No se pudo leer el archivo de mediciones"; } };
 const mapaListo=new Promise(r=>mapR.loaded()?r():mapR.once("load",r));
 async function listo(){ await mapaListo; analizar(); $("splash").style.display="none"; pintarParcelas(); cuadro(0);
-  mapR.fitBounds([[CFG.zona[0],CFG.zona[1]],[CFG.zona[2],CFG.zona[3]]],{padding:{top:120,bottom:200,left:40,right:40},pitch:30,duration:0}); }
+  mapR.fitBounds([[CFG.zona[0],CFG.zona[1]],[CFG.zona[2],CFG.zona[3]]],{padding:{top:120,bottom:200,left:40,right:40},pitch:0,duration:0}); }
 
 /* ---------- ajustes ---------- */
 function llenarAjustes(){ $("aSrv").value=CFG.srv;$("aIni").value=CFG.ini;$("aFin").value=CFG.fin;$("aU").value=CFG.U;$("aN").value=CFG.N;$("aZ").value=CFG.zona.join(",");
