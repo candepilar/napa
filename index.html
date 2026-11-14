@@ -87,9 +87,13 @@ table.amb i{display:inline-block;width:10px;height:10px;border-radius:2px;margin
 .reco{background:#eef3fb;border-left:3px solid #2868d6;border-radius:6px;padding:10px 12px;font-size:13px;line-height:1.45;margin-top:10px}
 svg.ser{width:100%;height:auto;display:block}svg.ser text{font:9px Inter;fill:#7a8088}
 .ce-ev{word-break:break-word}.ce-btn{flex-wrap:wrap}
-@media (max-height:880px){.lado2{display:none}}
+@media (max-height:1000px){.lado2{display:none}}body.conlotes .lado2{display:none}
 .chipsN{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}.chipN{font:12px Inter;border:1px solid #d6d3ca;background:#fff;border-radius:99px;padding:4px 9px;cursor:pointer;color:#16191c}
 .chipN.alto{border-color:#2868d6;color:#16324f;background:#eef3fb}.chipN.on{background:#5a44c9;border-color:#5a44c9;color:#fff}
+#cert .volver{border:0;background:none;color:#2868d6;font:500 13px Inter;padding:0;margin:0 0 8px;cursor:pointer}
+#lotesArch button.todos{background:#ffd166;color:#081018;border-color:#ffd166;font-weight:600}
+table.cart th{text-align:left;font:600 11px Inter;color:#7a8088;padding:4px 0;border-bottom:1px solid #e2e0d9}table.cart th:nth-child(n+2){text-align:right}
+table.cart tr.clic{cursor:pointer}table.cart tr.clic:hover td{background:#f0eee7}table.cart small{margin-left:0;color:#c8372d}
 /* celular */
 body.campo header nav,body.campo .titulo,body.campo .barra,body.campo .lado,body.campo #swipe,body.campo .lado2,body.campo .tot,body.campo .cierre{display:none!important}
 .movil{display:none}body.campo .movil{display:block;position:absolute;left:0;right:0;top:56px;z-index:12;padding:10px 16px;background:linear-gradient(#081018ee,#08101800)}
@@ -316,6 +320,7 @@ const mapR=new maplibregl.Map({container:"mapR",center:centro,zoom:8.6,pitch:0,a
      {id:"hd",type:"raster",source:"hd",minzoom:11,layout:{visibility:"none"},paint:{"raster-fade-duration":150}},
      {id:"parc",type:"raster",source:"parc",layout:{visibility:"none"},paint:{"raster-fade-duration":0,"raster-resampling":"nearest","raster-opacity":.82}},
      {id:"nisar",type:"raster",source:"nisar",layout:{visibility:"none"},paint:{"raster-fade-duration":150}},
+     {id:"lotesF",type:"fill",source:"lotes",paint:{"fill-color":["get","c"],"fill-opacity":.6}},
      {id:"frec",type:"raster",source:"frec",layout:{visibility:"none"},paint:{"raster-fade-duration":0,"raster-resampling":"nearest","raster-opacity":.92}},
      {id:"lotes",type:"line",source:"lotes",paint:{"line-color":"#ffd166","line-width":1.5,"line-opacity":.8}},
      {id:"caja",type:"line",source:"caja",paint:{"line-color":"#ffffff","line-width":2.5}},
@@ -407,21 +412,15 @@ function celdaParcela(lng,lat){ if(!D) return null; const {z,tx0,ty0}=D, c=Math.
 
 let INF = null, ULT = null;
 function panel(html){ const ce=$("cert"); ce.classList.add("on"); ce.innerHTML=`<button class="x" onclick="cerrarCert()" aria-label="Cerrar">×</button>`+html; }
-async function informe(anillo, nombre){
-  const id={}; INF=id; const ring=cerrarAnillo(anillo);
-  const xs=ring.map(p=>p[0]), ys=ring.map(p=>p[1]), bb=[Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)];
+// Mide un lote sin tocar la interfaz. vivo() devuelve false para abortar.
+async function medirLote(anillo,nombre,prog,vivo){
+  const ring=cerrarAnillo(anillo), xs=ring.map(p=>p[0]), ys=ring.map(p=>p[1]), bb=[Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)];
   const ha=areaHa(ring), cen=[(bb[0]+bb[2])/2,(bb[1]+bb[3])/2];
-  mapR.getSource("caja").setData({type:"Feature",geometry:{type:"Polygon",coordinates:[ring]}});
-  try{ mapR.setLayoutProperty("frec","visibility","none"); mapR.setLayoutProperty("nisar","visibility","none"); }catch(e){}
-  const cab=`<div class="ce-k">Informe hídrico del lote · Napa</div><div class="ce-h">${esc(nombre)}</div><div class="ce-s">${fmt(ha)} ha · ${cen[1].toFixed(4)}, ${cen[0].toFixed(4)}</div>`;
-  if(ha>5000){ panel(cab+`<p class="ce-s" style="margin-top:14px">El lote tiene más de 5.000 ha. Medí lotes individuales para que el mapa tenga sentido agronómico.</p>`); return; }
-  panel(cab+`<div class="carga" id="ceC">Buscando en el catálogo de la NASA todas las pasadas de radar sobre el lote…</div><div class="prog cl"><i id="ceB"></i></div>`);
-  const prog=(f,t)=>{ if(INF!==id) return; const c=$("ceC"), b=$("ceB"); if(c) c.textContent=t; if(b) b.style.width=Math.round(f*100)+"%"; };
-  try{
+  if(ha>5000) throw new Error("el lote tiene más de 5.000 ha; medí lotes individuales");
     const fin=hoyISO(), gran={}; const pNisar=pasadasNisar(bb,HIST_INI,fin).catch((e)=>{ console.warn("NISAR",e); return null; });
     (await granulos(bb,HIST_INI,fin)).forEach(g=>(gran[g.fecha]=gran[g.fecha]||[]).push(g));
     const fechas=Object.keys(gran).sort(); if(!fechas.length) throw new Error("no hay pasadas DSWx-S1 sobre este lote");
-    if(INF!==id) return;
+    if(!vivo()) return null;
     // grilla de píxeles del lote a zoom 12 (~33 m a esta latitud, cercano a los 30 m de DSWx-S1)
     const z=ZC, tx0=Math.floor(lon2t(bb[0],z)), tx1=Math.floor(lon2t(bb[2],z)), ty0=Math.floor(lat2t(bb[3],z)), ty1=Math.floor(lat2t(bb[1],z));
     const nx=tx1-tx0+1, ny=ty1-ty0+1, W=nx*T, H=ny*T;
@@ -434,7 +433,7 @@ async function informe(anillo, nombre){
     const tiles=Object.keys(porTile).map(k=>({tx:tx0+(k%nx), ty:ty0+((k/nx)|0), idx:porTile[k]}));
     const val=new Uint16Array(npx), agu=new Uint16Array(npx), obs=[]; let hechas=0, err=0;
     await enParalelo(fechas,6,async(f)=>{
-      if(INF!==id) return; let n=0,a=0,g=0;
+      if(!vivo()) return null; let n=0,a=0,g=0;
       try{ const p=await plantilla(f,"anal");
         for(const t of tiles){ const cl=await tileCls(urlTile(p.tpl,z,t.tx,t.ty)); if(!cl) continue;
           for(const i of t.idx){ const gi=dentro[i], r=((gi/W)|0)-(t.ty-ty0)*T, c=(gi%W)-(t.tx-tx0)*T, v=cl[r*T+c]; if(!v) continue;
@@ -444,7 +443,7 @@ async function informe(anillo, nombre){
         obs.push(punto(f,n,a,g,gr&&gr.ur)); }
       hechas++; prog(hechas/fechas.length,`Midiendo el lote en ${fechas.length} pasadas de radar (${fmtC(fechas[0])} de ${fechas[0].slice(0,4)} a hoy): ${hechas} de ${fechas.length}${err?` · ${err} sin respuesta`:""}`);
     });
-    if(INF!==id) return;
+    if(!vivo()) return null;
     if(err && err>=fechas.length*0.9) throw new Error("el servidor de mapas no respondió. Probá con el proxy en Ajustes");
     obs.sort((x,y)=>x.fecha<y.fecha?-1:1);
     // frecuencia por píxel y ambientes
@@ -456,12 +455,64 @@ async function informe(anillo, nombre){
       if(k===null) im.data.set([255,255,255,60],o); else im.data.set(AMB.find(a=>a.k===k).col,o); }
     cx.putImageData(im,0,0);
     const w=t2lon(tx0+c0/T,z), e=t2lon(tx0+c1/T,z), n=t2lat(ty0+r0/T,z), s=t2lat(ty0+r1/T,z);
-    cv.toBlob((b)=>{ if(INF!==id) return; mapR.getSource("frec").updateImage({url:URL.createObjectURL(b),coordinates:[[w,n],[e,n],[e,s],[w,s]]}); mapR.setLayoutProperty("frec","visibility","visible"); });
-    const nisar=await pNisar; if(INF!==id) return;
-    ULT={nisar,nombre,ring,ha,haLote,fechas,obs,gran,npx,dentro,W,z,tx0,ty0,val,agu,cls,sup,haCub};
-    verInforme(ULT);
-  }catch(e){ console.error(e); if(INF!==id) return; const c=$("ceC"); if(c){ c.className="ce-s"; c.textContent="No se pudo medir: "+e.message; } }
+    cv.toBlob((b)=>{ if(!vivo()) return null; mapR.getSource("frec").updateImage({url:URL.createObjectURL(b),coordinates:[[w,n],[e,n],[e,s],[w,s]]}); mapR.setLayoutProperty("frec","visibility","visible"); });
+    const nisar=await pNisar; if(!vivo()) return null;
+    return {nisar,nombre,ring,ha,haLote,fechas,obs,gran,npx,dentro,W,z,tx0,ty0,val,agu,cls,sup,haCub,capa:{cv,coords:[[w,n],[e,n],[e,s],[w,s]]}};
 }
+function mostrarLote(R){ ULT=R; mapR.getSource("caja").setData({type:"Feature",geometry:{type:"Polygon",coordinates:[R.ring]}});
+  try{ mapR.setLayoutProperty("nisar","visibility","none"); }catch(e){}
+  R.capa.cv.toBlob((b)=>{ if(ULT!==R) return; mapR.getSource("frec").updateImage({url:URL.createObjectURL(b),coordinates:R.capa.coords}); mapR.setLayoutProperty("frec","visibility","visible"); });
+  verInforme(R); }
+async function informe(anillo, nombre){
+  const id={}; INF=id; const ring=cerrarAnillo(anillo);
+  const xs=ring.map(p=>p[0]), ys=ring.map(p=>p[1]), bb=[Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)];
+  const ha=areaHa(ring), cen=[(bb[0]+bb[2])/2,(bb[1]+bb[3])/2];
+  mapR.getSource("caja").setData({type:"Feature",geometry:{type:"Polygon",coordinates:[ring]}});
+  try{ mapR.setLayoutProperty("frec","visibility","none"); mapR.setLayoutProperty("nisar","visibility","none"); }catch(e){}
+  panel(`<div class="ce-k">Informe hídrico del lote · Napa</div><div class="ce-h">${esc(nombre)}</div><div class="ce-s">${fmt(ha)} ha · ${cen[1].toFixed(4)}, ${cen[0].toFixed(4)}</div><div class="carga" id="ceC">Buscando en el catálogo de la NASA todas las pasadas de radar sobre el lote…</div><div class="prog cl"><i id="ceB"></i></div>`);
+  const prog=(f,t)=>{ if(INF!==id) return; const c=$("ceC"), b=$("ceB"); if(c) c.textContent=t; if(b) b.style.width=Math.round(f*100)+"%"; };
+  try{ const R=await medirLote(anillo,nombre,prog,()=>INF===id); if(R&&INF===id) mostrarLote(R); }
+  catch(e){ console.error(e); if(INF!==id) return; const c=$("ceC"); if(c){ c.className="ce-s"; c.textContent="No se pudo medir: "+e.message; } }
+}
+
+/* ---------- cartera: todos los lotes de un archivo ---------- */
+let CART=null;
+function resumen(R){ const ev=R.obs.filter(o=>o.fecha>=CFG.ini&&o.fecha<=CFG.fin), e=estado(ev), d=ev.length>1?duracion(ev):{min:0,max:0}, bajos=R.sup.p+R.sup.f;
+  return {nombre:R.nombre,ha:R.ha,bajos,haCub:R.haCub,pctB:R.haCub?bajos/R.haCub:-1,cub:R.haLote?R.haCub/R.haLote:0,e,dmin:d.min,dmax:d.max,pasadas:R.obs.length}; }
+const colBajos=(p)=>p>=.3?"#143478":p>=.1?"#2868d6":p>=.03?"#80b2f8":"#e4dfd3";
+const COLE={r:"#c8372d",a:"#b07408",g:"#2f7d4f",x:"#868c92"};
+function pintarLotes(){ mapR.getSource("lotes").setData({type:"FeatureCollection",features:LOTES.map((L,i)=>{ const r=CART&&CART.res[i];
+  return {type:"Feature",properties:{c:r&&!r.error&&r.pctB>=0?colBajos(r.pctB):"#00000000"},geometry:{type:"Polygon",coordinates:[cerrarAnillo(L.ring)]}}; })}); }
+async function medirTodos(){
+  if(!LOTES.length) return; const id={}; INF=id; ULT=null; CART={res:new Array(LOTES.length),R:new Array(LOTES.length),hecho:false};
+  try{ mapR.setLayoutProperty("frec","visibility","none"); mapR.setLayoutProperty("nisar","visibility","none"); }catch(e){}
+  mapR.getSource("caja").setData(vacioFC); pintarLotes(); verCartera();
+  for(let i=0;i<LOTES.length;i++){ if(INF!==id) return; const L=LOTES[i];
+    const prog=(f,t)=>{ if(INF!==id) return; const c=$("ceC"), b=$("ceB"); if(c) c.textContent=`Lote ${i+1} de ${LOTES.length} · ${L.nombre}: ${t}`; if(b) b.style.width=Math.round((i+f)/LOTES.length*100)+"%"; };
+    try{ const R=await medirLote(L.ring,L.nombre,prog,()=>INF===id); if(!R) return; CART.R[i]=R; CART.res[i]=resumen(R); }
+    catch(e){ console.warn(L.nombre,e); CART.res[i]={nombre:L.nombre,ha:areaHa(cerrarAnillo(L.ring)),error:e.message}; }
+    if(INF!==id) return; pintarLotes(); verCartera(); }
+  CART.hecho=true; verCartera();
+}
+function verCartera(){ if(!CART) return; const ok=CART.res.map((r,i)=>[r,i]).filter(([r])=>r&&!r.error), n=CART.res.filter(Boolean).length;
+  const haT=ok.reduce((a,[r])=>a+r.haCub,0), haB=ok.reduce((a,[r])=>a+r.bajos,0), conf=ok.filter(([r])=>r.e==="r"), pos=ok.filter(([r])=>r.e==="a");
+  const haC=conf.reduce((a,[r])=>a+r.ha,0), filas=CART.res.map((r,i)=>[r,i]).filter(([r])=>r).sort((x,y)=>(y[0].pctB||-1)-(x[0].pctB||-1));
+  const EV={r:"Confirmado",a:"Posible",g:"No",x:"Sin datos"};
+  panel(`<div class="ce-k">Cartera de lotes · Napa</div><div class="ce-h">${LOTES.length} lotes · ${fmt(LOTES.reduce((a,L)=>a+areaHa(cerrarAnillo(L.ring)),0))} ha</div>
+   ${CART.hecho?"":`<div class="carga" id="ceC">Midiendo…</div><div class="prog cl"><i id="ceB" style="width:${Math.round(n/LOTES.length*100)}%"></i></div>`}
+   ${ok.length?`<div class="ce-kp" style="margin-top:14px"><div><small>Bajos que se anegan con frecuencia</small><b>${fmt(haB)} ha</b><small>${haT?Math.round(haB/haT*100):0}% de ${fmt(haT)} ha con historia suficiente</small></div>
+     <div><small>Anegamiento prolongado en el evento</small><b>${fmt(haC)} ha</b><small>${conf.length} lotes confirmados · ${pos.length} posibles</small></div></div>`:""}
+   <div class="sec">Lotes, de más a menos bajos</div>
+   <table class="amb cart"><tr><th>Lote</th><th>ha</th><th>Bajos</th><th>Evento</th></tr>
+   ${filas.map(([r,i])=>r.error?`<tr><td>${esc(r.nombre)}<small>${esc(r.error)}</small></td><td>${fmt(r.ha)}</td><td>—</td><td>—</td></tr>`
+     :`<tr class="clic" onclick="abrirDeCartera(${i})"><td><i style="background:${r.pctB<0?"#fff;border:1px solid #ccc":colBajos(r.pctB)}"></i>${esc(r.nombre)}</td><td>${fmt(r.ha)}</td><td>${r.pctB<0?"s/d":Math.round(r.pctB*100)+"%"}</td><td><span style="color:${COLE[r.e]}">●</span> ${EV[r.e]}${r.dmin?` · ${r.dmin} d`:""}</td></tr>`).join("")}</table>
+   <p class="ce-s">Bajos: parte del lote que se anegó en el 20% o más de las pasadas de radar desde 2024 (s/d: todavía sin pasadas suficientes). Evento: ${fmtC(CFG.ini)} al ${fmtC(CFG.fin)}, más de ${CFG.N} días con más del ${CFG.U}% del lote bajo agua. Tocá un lote para ver su informe.</p>
+   ${CART.hecho?`<div class="ce-btn"><button class="pri" onclick="csvCartera()">Cartera (CSV)</button><button onclick="print()">Imprimir o PDF</button></div>`:""}`); }
+function abrirDeCartera(i){ const R=CART&&CART.R[i]; if(!R) return; const L=LOTES[i]; INF=null;
+  const xs=L.ring.map(p=>p[0]), ys=L.ring.map(p=>p[1]); const h=Math.min(440,innerWidth*.28); mapR.fitBounds([[Math.min(...xs),Math.min(...ys)],[Math.max(...xs),Math.max(...ys)]],{padding:{top:110,bottom:110,left:h,right:h},maxZoom:15,duration:800});
+  mostrarLote(R); }
+function volverCartera(){ ULT=null; try{ mapR.setLayoutProperty("frec","visibility","none"); mapR.setLayoutProperty("nisar","visibility","none"); }catch(e){} mapR.getSource("caja").setData(vacioFC); aviso(""); verCartera(); }
+function csvCartera(){ if(!CART) return; bajar("napa_cartera.csv","lote,ha,ha_bajos_frecuentes,pct_bajos,pct_lote_clasificado,pasadas,evento,dias_confirmados,dias_posibles,error\n"+CART.res.filter(Boolean).map(r=>r.error?[JSON.stringify(r.nombre),r.ha.toFixed(1),"","","","","","","",JSON.stringify(r.error)].join(","):[JSON.stringify(r.nombre),r.ha.toFixed(1),r.bajos.toFixed(1),r.pctB<0?"":Math.round(r.pctB*100),Math.round(r.cub*100),r.pasadas,r.e==="r"?"confirmado":r.e==="a"?"posible":r.e==="g"?"no":"sin datos",r.dmin,r.dmax,""].join(",")).join("\n"),"text/csv"); }
 const esc=(t)=>String(t).replace(/[&<>"]/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const mesC=(f)=>new Date(f+"T12:00:00Z").toLocaleDateString("es-AR",{month:"short",year:"2-digit",timeZone:"UTC"});
 function serieSVG(obs,ini,fin){
@@ -492,7 +543,8 @@ function verInforme(I){
     g:["Sin anegamiento prolongado",`El lote no superó ${CFG.N} días con más del ${CFG.U}% bajo agua.`],x:["Sin datos suficientes","Menos de dos pasadas válidas en el período."]}[e];
   const n=obs.length, uno=obs[0], ult=obs[n-1];
   const link=(o)=>o&&o.ur?`<a href="https://cmr.earthdata.nasa.gov/search/granules.umm_json?short_name=${SN}&granule_ur=${encodeURIComponent(o.ur)}" target="_blank" rel="noopener">${esc(o.ur)}</a>`:"—";
-  panel(`<div class="ce-k">Informe hídrico del lote · Napa</div><div class="ce-h">${esc(I.nombre)}</div>
+  const deCart=CART&&CART.R.includes(I);
+  panel(`${deCart?`<button class="volver" onclick="volverCartera()">← Volver a la cartera</button>`:""}<div class="ce-k">Informe hídrico del lote · Napa</div><div class="ce-h">${esc(I.nombre)}</div>
    <div class="ce-s">${fmt(ha)} ha · ${n} pasadas de radar válidas entre ${fmtF(uno?uno.fecha:HIST_INI)} y ${fmtF(ult?ult.fecha:fin)}</div>
    <div class="sec">Ambientes hídricos</div>
    <div class="barra-amb">${AMB.map(a=>sup[a.k]?`<i style="flex:${sup[a.k]};background:${a.css}"></i>`:"").join("")}</div>
@@ -555,7 +607,7 @@ function lotesDeArchivo(txt){ const out=[];
       ps.forEach((pc)=>{ if(pc&&pc[0]&&pc[0].length>=3) out.push({nombre:String(pr.nombre||pr.name||pr.Name||pr.lote||pr.id||`Lote ${out.length+1}`),ring:pc[0].map(c=>[+c[0],+c[1]])}); }); }); }
   return out; }
 let LOTES=[];
-function irALote(i){ const L=LOTES[i]; if(!L) return; document.querySelectorAll("#lotesArch button").forEach((b,k)=>b.classList.toggle("on",k===i));
+function irALote(i){ const L=LOTES[i]; if(!L) return; document.querySelectorAll("#lotesArch button.lb").forEach((b,k)=>b.classList.toggle("on",k===i));
   const xs=L.ring.map(p=>p[0]), ys=L.ring.map(p=>p[1]); mapR.fitBounds([[Math.min(...xs),Math.min(...ys)],[Math.max(...xs),Math.max(...ys)]],{padding:(()=>{const h=Math.min(440,innerWidth*.28);return {top:110,bottom:110,left:h,right:h};})(),maxZoom:15,duration:800});
   informe(L.ring,L.nombre); }
 $("bDib").onclick=()=>DIB?cancelarDibujo():empezarDibujo();
@@ -563,9 +615,10 @@ $("bArch").onchange=async(e)=>{ const f=e.target.files[0]; e.target.value=""; if
   if(/\.kmz$/i.test(f.name)){ aviso("Los KMZ vienen comprimidos: abrilo en Google Earth y guardalo como KML",4000); return; }
   try{ LOTES=lotesDeArchivo(await f.text()); }catch(err){ LOTES=[]; }
   if(!LOTES.length){ aviso("No encontré polígonos de lotes en el archivo",3000); return; }
-  const fc={type:"FeatureCollection",features:LOTES.map(L=>({type:"Feature",properties:{},geometry:{type:"Polygon",coordinates:[cerrarAnillo(L.ring)]}}))}; mapR.getSource("lotes").setData(fc);
-  $("lotesArch").innerHTML=`<small>${LOTES.length} lote${LOTES.length>1?"s":""} en ${esc(f.name)}</small>`+LOTES.map((L,i)=>`<button onclick="irALote(${i})">${esc(L.nombre)} · ${fmt(areaHa(L.ring))} ha</button>`).join("");
-  irALote(0); };
+  CART=null; pintarLotes(); document.body.classList.add("conlotes");
+  $("lotesArch").innerHTML=`<small>${LOTES.length} lote${LOTES.length>1?"s":""} en ${esc(f.name)}</small>`+(LOTES.length>1?`<button class="todos" onclick="medirTodos()">Medir los ${LOTES.length} lotes (cartera)</button>`:"")+LOTES.map((L,i)=>`<button class="lb" onclick="irALote(${i})">${esc(L.nombre)} · ${fmt(areaHa(L.ring))} ha</button>`).join("");
+  if(LOTES.length>1){ const xs=LOTES.flatMap(L=>L.ring.map(p=>p[0])), ys=LOTES.flatMap(L=>L.ring.map(p=>p[1])); mapR.fitBounds([[Math.min(...xs),Math.min(...ys)],[Math.max(...xs),Math.max(...ys)]],{padding:80,maxZoom:14,duration:800});
+    cerrarCert(); aviso(`${LOTES.length} lotes cargados. Tocá uno de la lista o medí toda la cartera.`,4000); } else irALote(0); };
 mapR.on("dblclick",(e)=>{ if(DIB){ e.preventDefault(); terminarDibujo(); } });
 mapR.on("click",(e)=>{ const q=[e.lngLat.lng,e.lngLat.lat];
   if(DIB){ DIB.pts.push(q); verDibujo(); return; }

@@ -36,7 +36,9 @@ Es el producto para vender. En el acto 2 se dibuja un lote (clic en cada esquina
 - **Evento** (período de Ajustes): días bajo agua confirmados y posibles.
 - **Exportar**: serie (CSV), mapa por píxel (CSV con lon, lat, pasadas, frecuencia y ambiente, para QGIS o el software de prescripción), lote (GeoJSON) e impresión a PDF.
 
-Tarda entre 30 segundos y 2 minutos según el tamaño del lote. Los KMZ hay que pasarlos a KML (Google Earth: guardar como KML).
+**Cartera**: si el KML o GeoJSON tiene varios lotes, **Medir los N lotes** los mide uno tras otro y arma un resumen: hectáreas de bajos frecuentes, hectáreas con anegamiento prolongado en el evento y un ranking de lotes de más a menos bajos, exportable a CSV. Cada fila abre el informe del lote. Pensado para cooperativas, acopios y aseguradoras.
+
+Tarda entre 30 segundos y 2 minutos por lote (los lotes vecinos comparten datos y van más rápido). Los KMZ hay que pasarlos a KML (Google Earth: guardar como KML).
 
 ## Demo de presentación (index.html (presentación))
 

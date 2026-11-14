@@ -14,6 +14,7 @@ Se dibuja un lote o se sube el KML del campo. Napa reúne todas las pasadas del 
 - **Serie histórica**: % del lote con agua en cada pasada, con intervalo de confianza de 95%.
 - **Evento**: días bajo agua confirmados y posibles, como respaldo técnico para seguros y emergencias agropecuarias.
 - **Segunda mirada con NISAR**: el radar de banda L de la NASA atraviesa el cultivo y muestra el agua escondida debajo de las plantas, justo donde la banda C de Sentinel-1 puede fallar. Napa cruza cada pasada de NISAR con la de Sentinel-1 más cercana.
+- **Cartera**: con un KML de muchos lotes (los de los socios de una cooperativa, por ejemplo), Napa los mide todos y resume cuántas hectáreas son bajos frecuentes y cuántas estuvieron bajo agua en un evento, con un ranking por lote.
 - **Exportación**: CSV por píxel para software de siembra variable, GeoJSON y PDF.
 
 Funciona en el navegador, sin cuentas ni procesamiento propio: todo se pide a servicios públicos de la NASA (CMR, OPERA, GIBS). Lo probamos con [EMPRESA] sobre lotes que conocen: [RESULTADO, por ejemplo "los bajos que marcó Napa coincidieron con los que ellos conocen en 3 de 3 lotes"].
@@ -37,7 +38,7 @@ Funciona en el navegador, sin cuentas ni procesamiento propio: todo se pide a se
 3. **Demo**: un lote real, su mapa de ambientes y su serie.
 4. **Precisión**: intervalos de 95%, mínimo de pasadas por píxel, trazabilidad a cada archivo de la NASA, límites declarados.
 5. **Validación**: lo que dijo [EMPRESA].
-6. **Quién lo usa**: agrónomos (siembra variable), productores, aseguradoras y gobiernos (emergencia agropecuaria).
+6. **Quién lo usa**: cooperativas y acopios (estado de los campos de todos sus socios), agrónomos (siembra variable), productores, aseguradoras y gobiernos (emergencia agropecuaria).
 7. **Lo que sigue**: sumar NISAR al cálculo cuando salga de la etapa provisional, catastro provincial y alertas por lote.
 
 ## Preguntas que puede hacer el jurado
