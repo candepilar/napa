@@ -62,7 +62,7 @@ body:not(.a1) .solo1,body:not(.a2) .solo2,body:not(.a3) .solo3{display:none!impo
 #splash button.pri{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .prog{height:6px;background:#ffffff1a;border-radius:9px;overflow:hidden;margin-top:18px}.prog i{display:block;height:100%;width:0;background:var(--agua);transition:width .2s}
 #progT{font-size:13px;color:var(--ink2);margin-top:8px;min-height:18px}
-#ajustes{position:absolute;top:60px;right:20px;z-index:45;background:#0f1a26;border:1px solid var(--line);border-radius:12px;padding:16px;width:340px;display:none;font-size:13px}
+#ajustes{position:absolute;top:60px;right:20px;z-index:45;background:#0f1a26;border:1px solid var(--line);border-radius:12px;padding:16px;width:340px;display:none;font-size:13px;max-height:calc(100vh - 80px);overflow:auto}
 #ajustes.on{display:block}#ajustes label{display:block;margin:10px 0 4px;color:var(--ink2)}#ajustes input{width:100%;font:13px Inter;background:#081018;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 9px}
 #ajustes .dos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 #aviso{position:absolute;top:64px;left:50%;transform:translateX(-50%);z-index:50;background:#16191cee;border:1px solid var(--line);padding:9px 14px;border-radius:10px;font-size:13px;display:none;max-width:90vw;text-align:center}
@@ -171,8 +171,13 @@ body.campo header nav,body.campo .titulo,body.campo .barra,body.campo .lado,body
   <div class="dos"><div><label>Desde</label><input id="aIni" type="date"></div><div><label>Hasta</label><input id="aFin" type="date"></div></div>
   <div class="dos"><div><label>Agua en la parcela (%)</label><input id="aU" type="number" min="1" max="100"></div><div><label>Días mínimos</label><input id="aN" type="number" min="1"></div></div>
   <label>Zona (oeste, sur, este, norte)</label><input id="aZ" type="text">
-  <label>Alertas WhatsApp: proxy del VPS con Green API</label><input id="aAl" type="text" placeholder="https://tu-vps:8787">
-  <div class="dos"><div><label>Clave de alertas</label><input id="aCl" type="password"></div><div><label>WhatsApp del centro</label><input id="aTc" type="text" placeholder="5493411234567"></div></div>
+  <b style="display:block;margin-top:14px">Alertas por WhatsApp (Green API)</b>
+  <div class="dos"><div><label>idInstance</label><input id="aGi" type="text"></div><div><label>apiTokenInstance</label><input id="aGt" type="password"></div></div>
+  <label>Host de la instancia</label><input id="aGu" type="text" placeholder="https://api.green-api.com">
+  <label>WhatsApp del centro primario</label><input id="aTc" type="text" placeholder="5493411234567">
+  <p style="color:var(--ink3);font-size:11px;margin:6px 0 0">Se guardan solo en este navegador. Usalo en tu compu, no en una compartida.</p>
+  <details style="margin-top:8px"><summary style="color:var(--ink3);cursor:pointer">Con un proxy propio en lugar de Green API directo</summary>
+  <label>Proxy</label><input id="aAl" type="text" placeholder="https://tu-servidor:8787"><label>Clave de alertas</label><input id="aCl" type="password"></details>
   <div style="display:flex;gap:8px;margin-top:12px"><button class="ico" id="aOk">Aplicar</button><button class="ico" id="aGuardar">Guardar mediciones</button></div>
 </div>
 
@@ -205,6 +210,7 @@ const CFG = {
   ini: LS("ini") || "2026-03-20", fin: LS("fin") || "2026-05-31",
   U: +(LS("U") || 30), N: +(LS("N") || 10),
   alSrv: LS("alSrv") || "", clave: LS("clave") || "", telCentro: LS("telCentro") || "",
+  gId: LS("gId") || "", gTok: LS("gTok") || "", gUrl: LS("gUrl") || "https://api.green-api.com",
   zona: (LS("zona") || "-60.95,-29.75,-59.95,-28.85").split(",").map(Number)
 };
 const SN = "OPERA_L3_DSWX-S1_V1", ASSET = "B01_WTR", REGEX = "B[0-9]{2}_[A-Z]+";
@@ -523,11 +529,13 @@ const telLimpio=(t)=>String(t||"").replace(/[^0-9]/g,"");
 function textoAlerta(r){ const a=r.alerta, rc=recosDe(r).filter(x=>x.k!=="alto")[0];
   return `*Napa · Alerta de agua*\nLote: ${r.nombre} (${fmt(r.ha)} ha)\nRadar del ${fmtF(a.fecha)}: ${a.pct}% del lote con agua (entre ${a.lo} y ${a.hi}%).\nLo normal para este lote: ${a.normal}%.\n${rc?`Sugerencia: ${rc.nom.toLowerCase()}.\n`:""}Fuente: radar Sentinel-1, NASA OPERA DSWx-S1.\n${location.href.split("#")[0].split("?")[0]}`; }
 const MSJ=[]; const regMsj=(texto,tel)=>MSJ.push({texto,tel})-1;
-const puedeEnviar=(tel)=>CFG.alSrv&&CFG.clave&&telLimpio(tel).length>=8;
+const puedeEnviar=(tel)=>((CFG.gId&&CFG.gTok)||(CFG.alSrv&&CFG.clave))&&telLimpio(tel).length>=8;
 function botonEnviar(texto,tel){ return puedeEnviar(tel)?`<button class="wa" onclick="enviarWA(this,${regMsj(texto,tel)})">Enviar ahora</button>`:""; }
 async function enviarWA(b,i){ const m=MSJ[i]; if(!m) return; b.disabled=true; b.textContent="Enviando…";
-  try{ const r=await fetch(CFG.alSrv.replace(/\/+$/,"")+"/alerta",{method:"POST",headers:{"Content-Type":"application/json","X-Clave":CFG.clave},body:JSON.stringify({telefono:m.tel,mensaje:m.texto})});
-    const j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.error||("error "+r.status)); b.textContent="Enviado ✓"; }
+  try{ let r;
+    if(CFG.gId&&CFG.gTok) r=await fetch(`${CFG.gUrl.replace(/\/+$/,"")}/waInstance${encodeURIComponent(CFG.gId)}/sendMessage/${encodeURIComponent(CFG.gTok)}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chatId:telLimpio(m.tel)+"@c.us",message:m.texto})});
+    else r=await fetch(CFG.alSrv.replace(/\/+$/,"")+"/alerta",{method:"POST",headers:{"Content-Type":"application/json","X-Clave":CFG.clave},body:JSON.stringify({telefono:m.tel,mensaje:m.texto})});
+    const j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.error||j.message||(r.status===401||r.status===403?"idInstance o token incorrectos":"error "+r.status)); b.textContent="Enviado ✓"; }
   catch(e){ console.error(e); b.disabled=false; b.textContent="Reintentar"; aviso("No se pudo enviar: "+e.message,5000); } }
 function linkWA(texto,tel){ return `https://wa.me/${telLimpio(tel)}?text=${encodeURIComponent(texto)}`; }
 function tarjetaAlerta(r,i){ const a=r.alerta;
@@ -733,13 +741,13 @@ async function listo(){ await mapaListo; analizar(); $("splash").style.display="
   mapR.fitBounds([[CFG.zona[0],CFG.zona[1]],[CFG.zona[2],CFG.zona[3]]],{padding:{top:120,bottom:200,left:40,right:40},pitch:0,duration:0}); }
 
 /* ---------- ajustes ---------- */
-function llenarAjustes(){ $("aSrv").value=CFG.srv;$("aIni").value=CFG.ini;$("aFin").value=CFG.fin;$("aU").value=CFG.U;$("aN").value=CFG.N;$("aZ").value=CFG.zona.join(",");$("aAl").value=CFG.alSrv;$("aCl").value=CFG.clave;$("aTc").value=CFG.telCentro;
+function llenarAjustes(){ $("aSrv").value=CFG.srv;$("aIni").value=CFG.ini;$("aFin").value=CFG.fin;$("aU").value=CFG.U;$("aN").value=CFG.N;$("aZ").value=CFG.zona.join(",");$("aAl").value=CFG.alSrv;$("aCl").value=CFG.clave;$("aTc").value=CFG.telCentro;$("aGi").value=CFG.gId;$("aGt").value=CFG.gTok;$("aGu").value=CFG.gUrl;
   $("spIni").textContent=fmtF(CFG.ini); $("spFin").textContent=fmtF(CFG.fin);
   const ha=(CFG.zona[2]-CFG.zona[0])*111.32*Math.cos(centro[1]*Math.PI/180)*(CFG.zona[3]-CFG.zona[1])*111.32*100; $("spHa").textContent=`${fmt(ha)} hectáreas del norte santafesino`; }
 $("bAj").onclick=()=>{llenarAjustes();$("ajustes").classList.toggle("on");};
 $("aOk").onclick=()=>{ const zona=$("aZ").value.split(",").map(Number); const zc=zona.length===4&&zona.every(isFinite)&&zona.join()!==CFG.zona.join();
-  Object.assign(CFG,{alSrv:$("aAl").value.trim(),clave:$("aCl").value,telCentro:$("aTc").value.trim(),srv:$("aSrv").value.trim(),ini:$("aIni").value,fin:$("aFin").value,U:+$("aU").value,N:+$("aN").value}); if(zona.length===4&&zona.every(isFinite)) CFG.zona=zona;
-  ["srv","ini","fin","U","N","alSrv","clave","telCentro"].forEach(k=>LS(k,String(CFG[k]))); LS("zona",CFG.zona.join(",")); for(const k in TPL) delete TPL[k];
+  Object.assign(CFG,{gId:$("aGi").value.trim(),gTok:$("aGt").value.trim(),gUrl:($("aGu").value.trim()||"https://api.green-api.com").replace(/\/+$/,""),alSrv:$("aAl").value.trim(),clave:$("aCl").value,telCentro:$("aTc").value.trim(),srv:$("aSrv").value.trim(),ini:$("aIni").value,fin:$("aFin").value,U:+$("aU").value,N:+$("aN").value}); if(zona.length===4&&zona.every(isFinite)) CFG.zona=zona;
+  ["srv","ini","fin","U","N","alSrv","clave","telCentro","gId","gTok","gUrl"].forEach(k=>LS(k,String(CFG[k]))); LS("zona",CFG.zona.join(",")); for(const k in TPL) delete TPL[k];
   $("ajustes").classList.remove("on"); if(zc){ location.reload(); return; } if(A){ analizar(); pintarParcelas(); cuadro(K); } llenarAjustes(); };
 $("bMedir").onclick=medirZona;
 
